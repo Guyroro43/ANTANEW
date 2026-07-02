@@ -11,7 +11,7 @@ export function Hero() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-12 overflow-hidden rounded-full border border-red-200 bg-white shadow-sm">
-              <Image src="/docs/img/logo.jpeg" alt="Logo ANTA" fill className="object-cover" />
+              <Image src="/logo.jpeg" alt="Logo ANTA" fill className="object-cover" priority />
             </div>
             <span className="text-lg font-black tracking-wide text-slate-900 dark:text-white">ANTA</span>
           </div>
@@ -52,9 +52,10 @@ export function Hero() {
       <div className="flex-1">
         <div className="relative overflow-hidden rounded-[2rem] border border-amber-200 bg-white/80 p-6 shadow-2xl shadow-amber-100 backdrop-blur">
           <div className="absolute inset-0">
-            <Image src="/docs/img/lion.jpeg" alt="Lion en fond pour ANTA" fill className="object-cover" />
+            <Image src="/lion.jpeg" alt="Lion en fond pour ANTA" fill className="object-cover" priority />
           </div>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(245,158,11,0.2),_transparent_35%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(245,158,11,0.35),_transparent_35%)]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-red-900/40 via-transparent to-green-900/40" />
           <div className="relative rounded-[1.5rem] border border-yellow-100 bg-gradient-to-br from-red-600/90 via-yellow-500/90 to-green-500/90 p-6 text-white">
             <div className="flex items-center justify-between">
               <div>

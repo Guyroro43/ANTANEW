@@ -28,7 +28,7 @@ export function Pricing() {
         {plans.map((plan) => (
           <div
             key={plan.name}
-            className={`rounded-[2rem] border p-8 shadow-sm ${plan.highlight ? 'border-green-500 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white'}`}
+            className={`rounded-[2rem] border p-8 shadow-sm ${plan.highlight ? 'border-green-500 bg-gradient-to-br from-slate-900 via-red-900 to-green-900 text-white' : 'border-red-200 bg-gradient-to-br from-white via-yellow-50 to-green-50 text-slate-900 dark:border-slate-700 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950 dark:text-white'}`}
           >
             <p className={`text-sm font-semibold uppercase tracking-[0.2em] ${plan.highlight ? 'text-yellow-300' : 'text-red-600 dark:text-yellow-400'}`}>
               {plan.name}

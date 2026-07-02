@@ -32,7 +32,7 @@ export function HowItWorks() {
       </div>
       <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {steps.map((step) => (
-          <div key={step.title} className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div key={step.title} className="rounded-[1.5rem] border border-red-200 bg-gradient-to-br from-white via-yellow-50 to-green-50 p-6 shadow-sm dark:border-slate-700 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-lg font-bold text-red-700 dark:bg-green-900/60 dark:text-green-300">
               {step.icon}
             </div>

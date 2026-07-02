@@ -43,7 +43,7 @@ export function ModulesSlider() {
       </div>
       <div className="mt-10 grid gap-6 md:grid-cols-2">
         {modules.map((module) => (
-          <div key={module.title} className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div key={module.title} className="overflow-hidden rounded-[1.75rem] border border-red-200 bg-gradient-to-br from-white via-yellow-50 to-green-50 shadow-sm dark:border-slate-700 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950">
             <div className={`h-32 bg-gradient-to-r ${module.accent}`} />
             <div className="p-6">
               <div className="flex items-center justify-between">

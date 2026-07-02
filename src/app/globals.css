@@ -14,12 +14,12 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: Arial, Helvetica, sans-serif;
-  background: #fffdf6;
+  background: linear-gradient(135deg, #fffdf5 0%, #fef3c7 35%, #ecfccb 100%);
   color: #0f172a;
 }
 
 html.dark body {
-  background: #020617;
+  background: linear-gradient(135deg, #020617 0%, #111827 45%, #052e16 100%);
   color: #f8fafc;
 }
 

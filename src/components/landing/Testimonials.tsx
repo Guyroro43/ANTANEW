@@ -22,7 +22,7 @@ export function Testimonials() {
       </div>
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
         {testimonials.map((item) => (
-          <div key={item.name} className="rounded-[1.5rem] border border-slate-200 bg-white p-7 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div key={item.name} className="rounded-[1.5rem] border border-red-200 bg-gradient-to-br from-white via-yellow-50 to-green-50 p-7 shadow-sm dark:border-slate-700 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950">
             <p className="text-lg leading-8 text-slate-700 dark:text-slate-300">“{item.quote}”</p>
             <div className="mt-6">
               <p className="font-semibold text-slate-900 dark:text-white">{item.name}</p>

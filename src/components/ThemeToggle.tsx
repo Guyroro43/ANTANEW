@@ -22,7 +22,9 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
+      type="button"
       className="rounded-full border border-red-300 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-green-400 hover:text-green-700 dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-100"
+      aria-label="Basculer le thème"
     >
       {theme === 'light' ? '🌙 Mode sombre' : '☀️ Mode clair'}
     </button>
