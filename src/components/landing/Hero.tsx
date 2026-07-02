@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 const highlights = ['10 min/jour', 'Modules culturels', 'Paiement local'];
@@ -6,6 +7,12 @@ export function Hero() {
   return (
     <section className="mx-auto flex max-w-7xl flex-col gap-10 px-6 py-16 lg:flex-row lg:items-center lg:px-8 lg:py-24">
       <div className="max-w-2xl flex-1">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="relative h-12 w-12 overflow-hidden rounded-full border border-amber-200 bg-white shadow-sm">
+            <Image src="/docs/img/logo.jpeg" alt="Logo ANTA" fill className="object-cover" />
+          </div>
+          <span className="text-lg font-black tracking-wide text-slate-900">ANTA</span>
+        </div>
         <span className="inline-flex items-center rounded-full border border-amber-300 bg-white/80 px-3 py-1 text-sm font-medium text-amber-700 shadow-sm">
           Apprends l’anglais avec les réalités d’Afrique
         </span>
@@ -40,8 +47,11 @@ export function Hero() {
 
       <div className="flex-1">
         <div className="relative overflow-hidden rounded-[2rem] border border-amber-200 bg-white/80 p-6 shadow-2xl shadow-amber-100 backdrop-blur">
+          <div className="absolute inset-0">
+            <Image src="/docs/img/lion.jpeg" alt="Lion en fond pour ANTA" fill className="object-cover" />
+          </div>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(245,158,11,0.2),_transparent_35%)]" />
-          <div className="relative rounded-[1.5rem] border border-amber-100 bg-gradient-to-br from-amber-500 via-orange-400 to-rose-400 p-6 text-white">
+          <div className="relative rounded-[1.5rem] border border-amber-100 bg-gradient-to-br from-amber-500/85 via-orange-400/85 to-rose-400/85 p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.3em] text-amber-50/90">Aujourd’hui</p>
