@@ -9,7 +9,7 @@ import { CtaFinal } from '../../components/landing/CtaFinal';
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(244,180,32,0.25),_transparent_32%),linear-gradient(135deg,_#fffdf6_0%,_#fef3c7_100%)] text-slate-900">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(239,68,68,0.18),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(34,197,94,0.18),_transparent_28%),linear-gradient(135deg,_#fffef7_0%,_#fef3c7_100%)] text-slate-900 transition-colors dark:bg-[radial-gradient(circle_at_top_left,_rgba(239,68,68,0.22),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(34,197,94,0.2),_transparent_28%),linear-gradient(135deg,_#020617_0%,_#111827_100%)] dark:text-slate-100">
       <Hero />
       <StatsBar />
       <HowItWorks />
@@ -18,10 +18,10 @@ export default function HomePage() {
       <Testimonials />
       <CtaFinal />
 
-      <footer className="border-t border-amber-200/70 bg-white/70 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+      <footer className="border-t border-red-200/70 bg-white/70 backdrop-blur dark:border-slate-700 dark:bg-slate-900/70">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between lg:px-8 dark:text-slate-300">
           <div>
-            <p className="font-semibold text-slate-900">ANTA</p>
+            <p className="font-semibold text-slate-900 dark:text-white">ANTA</p>
             <p className="mt-1">African Native Tongue Academy</p>
           </div>
           <div className="flex flex-wrap gap-4">
