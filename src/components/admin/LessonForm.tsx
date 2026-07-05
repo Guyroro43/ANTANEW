@@ -1,0 +1,228 @@
+'use client';
+
+import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { Input } from '@/components/ui/Input';
+import { Toggle } from '@/components/ui/Toggle';
+import { Button } from '@/components/ui/Button';
+import type { LessonInsert, Lesson } from '@/types/module';
+
+interface LessonFormProps {
+  initialValue?: Lesson;
+  onSubmit: (values: Omit<LessonInsert, 'module_id'>) => Promise<void>;
+  onCancel: () => void;
+}
+
+const difficulties = ['debutant', 'intermediaire', 'avance'] as const;
+
+const contentTypes = [
+  { value: 'qcm', label: 'QCM (questions)' },
+  { value: 'pdf', label: 'PDF' },
+  { value: 'video', label: 'Vidéo' },
+  { value: 'audio', label: 'Audio' },
+] as const;
+
+const accessLevels = [
+  { value: 'free', label: 'Gratuit' },
+  { value: 'premium', label: 'Premium' },
+  { value: 'all', label: 'Tout le monde' },
+] as const;
+
+export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps) {
+  const [values, setValues] = useState({
+    title: initialValue?.title ?? '',
+    description: initialValue?.description ?? '',
+    category: initialValue?.category ?? '',
+    difficulty: initialValue?.difficulty ?? 'debutant',
+    order_index: initialValue?.order_index ?? 0,
+    is_published: initialValue?.is_published ?? false,
+    content_type: initialValue?.content_type ?? 'qcm',
+    content_url: initialValue?.content_url ?? '',
+    access_level: initialValue?.access_level ?? 'free',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const path = `${values.content_type}/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage.from('lesson-media').upload(path, file);
+      if (uploadError) throw new Error(uploadError.message);
+
+      const { data } = supabase.storage.from('lesson-media').getPublicUrl(path);
+      setValues((prev) => ({ ...prev, content_url: data.publicUrl }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Échec de l'upload du fichier.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    setError(null);
+
+    if (!values.title.trim()) {
+      setError('Le titre est obligatoire.');
+      return;
+    }
+
+    if (values.content_type !== 'qcm' && !values.content_url.trim()) {
+      setError('Ajoute un fichier ou une URL pour ce type de contenu.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit({
+        title: values.title.trim(),
+        description: values.description || null,
+        category: values.category || null,
+        difficulty: values.difficulty,
+        order_index: values.order_index,
+        is_published: values.is_published,
+        content_type: values.content_type,
+        content_url: values.content_url || null,
+        access_level: values.access_level,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <Input
+        label="Titre"
+        value={values.title}
+        onChange={(e) => setValues({ ...values, title: e.target.value })}
+        placeholder="Se présenter en anglais"
+      />
+      <Input
+        label="Description"
+        value={values.description}
+        onChange={(e) => setValues({ ...values, description: e.target.value })}
+      />
+      <Input
+        label="Catégorie"
+        value={values.category}
+        onChange={(e) => setValues({ ...values, category: e.target.value })}
+        placeholder="Vocabulaire, grammaire…"
+      />
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">Difficulté</label>
+          <select
+            value={values.difficulty}
+            onChange={(e) => setValues({ ...values, difficulty: e.target.value })}
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-red-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
+            {difficulties.map((difficulty) => (
+              <option key={difficulty} value={difficulty}>
+                {difficulty}
+              </option>
+            ))}
+          </select>
+        </div>
+        <Input
+          label="Ordre d'affichage"
+          type="number"
+          min={0}
+          value={values.order_index}
+          onChange={(e) => setValues({ ...values, order_index: Number(e.target.value) })}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">Type de contenu</label>
+          <select
+            value={values.content_type}
+            onChange={(e) => setValues({ ...values, content_type: e.target.value as (typeof contentTypes)[number]['value'] })}
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-red-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
+            {contentTypes.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">Accès</label>
+          <select
+            value={values.access_level}
+            onChange={(e) => setValues({ ...values, access_level: e.target.value as (typeof accessLevels)[number]['value'] })}
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-red-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
+            {accessLevels.map((level) => (
+              <option key={level.value} value={level.value}>
+                {level.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {values.content_type !== 'qcm' && (
+        <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+          <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+            Fichier {values.content_type === 'pdf' ? 'PDF' : values.content_type === 'video' ? 'vidéo' : 'audio'}
+          </label>
+          <input
+            type="file"
+            accept={values.content_type === 'pdf' ? 'application/pdf' : values.content_type === 'video' ? 'video/*' : 'audio/*'}
+            onChange={handleFileChange}
+            disabled={isUploading}
+            className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-red-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-red-700 dark:text-slate-300"
+          />
+          {isUploading && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Envoi en cours…</p>}
+          <Input
+            label="Ou colle une URL"
+            className="mt-3"
+            value={values.content_url}
+            onChange={(e) => setValues({ ...values, content_url: e.target.value })}
+            placeholder="https://…"
+          />
+          {values.content_url && (
+            <a
+              href={values.content_url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block text-xs font-semibold text-red-600 hover:underline dark:text-yellow-400"
+            >
+              Prévisualiser le fichier
+            </a>
+          )}
+        </div>
+      )}
+
+      <Toggle
+        checked={values.is_published}
+        onChange={(checked) => setValues({ ...values, is_published: checked })}
+        label="Publiée"
+      />
+
+      {error ? <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p> : null}
+
+      <div className="mt-2 flex justify-end gap-3">
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          Annuler
+        </Button>
+        <Button type="submit" disabled={isSubmitting || isUploading}>
+          {isSubmitting ? 'Enregistrement…' : 'Enregistrer'}
+        </Button>
+      </div>
+    </form>
+  );
+}
