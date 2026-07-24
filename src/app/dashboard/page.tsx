@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Reveal } from '@/components/ui/Reveal';
 import { Icon, icons } from '@/components/ui/Icon';
 import { WelcomeBackModal } from '@/components/dashboard/WelcomeBackModal';
+import { getHomePathForRole, isAdminRole } from '@/lib/roleRouting';
 
 const shortcuts = [
   { href: '/modules', label: 'Modules', icon: icons.module },
@@ -34,8 +35,8 @@ export default async function Page() {
     .eq('id', user.id)
     .single();
 
-  if (profile?.role === 'admin') {
-    redirect('/admin/dashboard');
+  if (profile && isAdminRole(profile.role)) {
+    redirect(getHomePathForRole(profile.role));
   }
 
   const [{ data: streak }, { data: modules }] = await Promise.all([

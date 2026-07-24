@@ -13,8 +13,9 @@ export async function POST(request: Request) {
   }
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-  if (profile?.role !== 'admin') {
-    return NextResponse.json({ error: 'Accès réservé aux admins.' }, { status: 403 });
+  const canEditContent = profile && ['instructor', 'founder_instructor', 'developer'].includes(profile.role);
+  if (!canEditContent) {
+    return NextResponse.json({ error: 'Accès réservé aux instructeurs et développeurs.' }, { status: 403 });
   }
 
   const body = await request.json().catch(() => null);
