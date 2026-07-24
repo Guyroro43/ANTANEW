@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/utils/format';
 
 const levelLabels: Record<string, string> = {
@@ -47,7 +47,7 @@ export default async function Page() {
         </div>
 
         <div className="mt-8 flex items-center gap-4">
-          <Avatar name={firstName} src={profile?.avatar_url} size={64} />
+          <UserAvatar name={firstName} src={profile?.avatar_url} size={64} />
           <div>
             <p className="text-xl font-semibold">{firstName}</p>
             <Badge variant={isPremium ? 'success' : 'default'} className="mt-1">

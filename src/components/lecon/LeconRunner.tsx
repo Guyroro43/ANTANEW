@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { AudioPlayer } from './AudioPlayer';
 import { QuestionQCM } from './QuestionQCM';
 import { ResultatLecon, type Mistake } from './ResultatLecon';

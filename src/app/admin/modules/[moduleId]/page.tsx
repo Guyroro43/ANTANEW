@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { LessonForm } from '@/components/admin/LessonForm';
@@ -115,7 +115,7 @@ export default function Page() {
                     {lesson.is_published ? 'Publiée' : 'Brouillon'}
                   </Badge>
                   <Badge variant="default">{lesson.content_type.toUpperCase()}</Badge>
-                  <Badge variant={lesson.access_level === 'premium' ? 'danger' : lesson.access_level === 'all' ? 'success' : 'default'}>
+                  <Badge variant={lesson.access_level === 'premium' ? 'destructive' : lesson.access_level === 'all' ? 'success' : 'default'}>
                     {lesson.access_level === 'premium' ? 'Premium' : lesson.access_level === 'all' ? 'Tout le monde' : 'Gratuit'}
                   </Badge>
                 </div>

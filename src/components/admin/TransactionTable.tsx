@@ -1,13 +1,13 @@
-import { Badge } from '@/components/ui/Badge';
+import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate } from '@/utils/format';
 import type { Transaction } from '@/types/abonnement';
 
-type BadgeVariant = 'default' | 'success' | 'warning' | 'danger';
+type BadgeVariant = 'default' | 'success' | 'warning' | 'destructive';
 
 const statusVariant: Record<Transaction['status'], BadgeVariant> = {
   success: 'success',
   pending: 'warning',
-  failed: 'danger',
+  failed: 'destructive',
   refunded: 'default',
 };
 

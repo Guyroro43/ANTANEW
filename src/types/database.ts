@@ -11,7 +11,7 @@ export interface Database {
           avatar_url: string | null;
           english_level: 'debutant' | 'intermediaire' | 'avance';
           country: string | null;
-          role: 'user' | 'admin';
+          role: 'user' | 'instructor' | 'founder' | 'founder_instructor' | 'developer';
           level: string;
           total_xp: number;
           subscription_plan: 'starter' | 'premium';
@@ -27,7 +27,7 @@ export interface Database {
           avatar_url?: string | null;
           english_level?: 'debutant' | 'intermediaire' | 'avance';
           country?: string | null;
-          role?: 'user' | 'admin';
+          role?: 'user' | 'instructor' | 'founder' | 'founder_instructor' | 'developer';
           email?: string | null;
           level?: string;
           total_xp?: number;
@@ -51,6 +51,7 @@ export interface Database {
           xp_reward: number;
           order_index: number;
           is_published: boolean;
+          difficulty: number;
           created_at: string;
         };
         Insert: {
@@ -63,6 +64,7 @@ export interface Database {
           xp_reward?: number;
           order_index?: number;
           is_published?: boolean;
+          difficulty?: number;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['modules']['Insert']>;
@@ -254,11 +256,35 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['transactions']['Insert']>;
         Relationships: [];
       };
+      role_changes: {
+        Row: {
+          id: string;
+          user_id: string;
+          previous_role: string;
+          new_role: string;
+          changed_by: string | null;
+          changed_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          previous_role: string;
+          new_role: string;
+          changed_by?: string | null;
+          changed_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['role_changes']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      admin_update_profile: {
+        Args: { p_user_id: string; p_role?: string | null; p_subscription_plan?: string | null };
+        Returns: void;
+      };
       get_leaderboard: {
         Args: { p_limit?: number };
         Returns: {

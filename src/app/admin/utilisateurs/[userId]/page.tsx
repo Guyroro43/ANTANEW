@@ -4,14 +4,31 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/Spinner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { formatDate } from '@/utils/format';
 import type { Profile, UserRole, SubscriptionPlan } from '@/types/user';
 import type { Transaction } from '@/types/abonnement';
+
+const roleOptions: { value: UserRole; label: string }[] = [
+  { value: 'user', label: 'Apprenant' },
+  { value: 'instructor', label: 'Instructeur' },
+  { value: 'founder', label: 'Fondateur' },
+  { value: 'founder_instructor', label: 'Fondateur-Instructeur' },
+  { value: 'developer', label: 'Développeur' },
+];
 
 export default function Page() {
   const { userId } = useParams<{ userId: string }>();
@@ -19,6 +36,8 @@ export default function Page() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingRole, setPendingRole] = useState<UserRole | null>(null);
+  const [roleError, setRoleError] = useState<string | null>(null);
 
   const loadData = async () => {
     const supabase = createClient();
@@ -36,12 +55,21 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  const updateRole = async (role: UserRole) => {
-    if (!user) return;
+  const confirmRoleChange = async () => {
+    if (!user || !pendingRole) return;
     setIsSaving(true);
+    setRoleError(null);
     const supabase = createClient();
-    await supabase.from('profiles').update({ role }).eq('id', user.id);
-    await loadData();
+    const { error } = await supabase.rpc('admin_update_profile', {
+      p_user_id: user.id,
+      p_role: pendingRole,
+    });
+    if (error) {
+      setRoleError(error.message);
+    } else {
+      setPendingRole(null);
+      await loadData();
+    }
     setIsSaving(false);
   };
 
@@ -49,7 +77,10 @@ export default function Page() {
     if (!user) return;
     setIsSaving(true);
     const supabase = createClient();
-    await supabase.from('profiles').update({ subscription_plan }).eq('id', user.id);
+    await supabase.rpc('admin_update_profile', {
+      p_user_id: user.id,
+      p_subscription_plan: subscription_plan,
+    });
     await loadData();
     setIsSaving(false);
   };
@@ -80,7 +111,7 @@ export default function Page() {
       </Link>
 
       <div className="mt-4 flex flex-wrap items-center gap-4">
-        <Avatar name={user.first_name} src={user.avatar_url} size={56} />
+        <UserAvatar name={user.first_name} src={user.avatar_url} size={56} />
         <div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white">{user.first_name}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">{user.email ?? 'Email inconnu'}</p>
@@ -110,15 +141,25 @@ export default function Page() {
         <Card>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">Rôle</h2>
           <div className="mt-3 flex items-center gap-3">
-            <Badge variant={user.role === 'admin' ? 'danger' : 'default'}>{user.role}</Badge>
-            <Button
-              variant="outline"
-              size="sm"
+            <Badge variant={user.role === 'developer' ? 'destructive' : user.role === 'user' ? 'default' : 'success'}>
+              {roleOptions.find((r) => r.value === user.role)?.label ?? user.role}
+            </Badge>
+            <Select
               disabled={isSaving}
-              onClick={() => updateRole(user.role === 'admin' ? 'user' : 'admin')}
+              value={user.role}
+              onValueChange={(value) => setPendingRole(value as UserRole)}
             >
-              {user.role === 'admin' ? 'Rétrograder en utilisateur' : 'Promouvoir admin'}
-            </Button>
+              <SelectTrigger className="w-56">
+                <SelectValue placeholder="Changer le rôle" />
+              </SelectTrigger>
+              <SelectContent>
+                {roleOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </Card>
         <Card>
@@ -149,7 +190,7 @@ export default function Page() {
               {transactions.map((tx) => (
                 <li key={tx.id} className="flex items-center justify-between py-3">
                   <span>{formatDate(tx.created_at)} — {tx.payment_method ?? '—'}</span>
-                  <Badge variant={tx.status === 'success' ? 'success' : tx.status === 'failed' ? 'danger' : 'warning'}>
+                  <Badge variant={tx.status === 'success' ? 'success' : tx.status === 'failed' ? 'destructive' : 'warning'}>
                     {tx.status}
                   </Badge>
                 </li>
@@ -158,6 +199,27 @@ export default function Page() {
           )}
         </div>
       </div>
+
+      <Dialog open={pendingRole !== null} onOpenChange={(open) => !open && setPendingRole(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Changer le rôle de {user.first_name} ?</DialogTitle>
+            <DialogDescription>
+              {user.first_name} passera de « {roleOptions.find((r) => r.value === user.role)?.label} » à «{' '}
+              {roleOptions.find((r) => r.value === pendingRole)?.label} ». Cette action est immédiate et journalisée.
+            </DialogDescription>
+          </DialogHeader>
+          {roleError && <p className="text-sm font-medium text-destructive">{roleError}</p>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingRole(null)} disabled={isSaving}>
+              Annuler
+            </Button>
+            <Button onClick={confirmRoleChange} disabled={isSaving}>
+              {isSaving ? 'Enregistrement…' : 'Confirmer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

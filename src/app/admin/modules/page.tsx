@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { ModuleForm } from '@/components/admin/ModuleForm';
@@ -96,7 +96,7 @@ export default function Page() {
                     <Badge variant={module.is_published ? 'success' : 'warning'}>
                       {module.is_published ? 'Publié' : 'Brouillon'}
                     </Badge>
-                    {module.is_premium ? <Badge variant="danger">Premium</Badge> : null}
+                    {module.is_premium ? <Badge variant="destructive">Premium</Badge> : null}
                   </div>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     {lessonCounts[module.id] ?? 0} leçon{(lessonCounts[module.id] ?? 0) > 1 ? 's' : ''} — {module.xp_reward} XP

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { Badge } from '@/components/ui/Badge';
+import { Badge } from '@/components/ui/badge';
 
 interface PageProps {
   params: { slug: string };
@@ -89,7 +89,7 @@ export default async function Page({ params }: PageProps) {
                         {lesson.category ? ` — ${lesson.category}` : ''}
                       </p>
                     </div>
-                    <Badge variant={completed ? 'success' : locked ? 'danger' : 'default'}>
+                    <Badge variant={completed ? 'success' : locked ? 'destructive' : 'default'}>
                       {completed ? '✓ Terminée' : locked ? '🔒 Premium' : 'À faire'}
                     </Badge>
                   </div>

@@ -2,9 +2,9 @@
 
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Input } from '@/components/ui/Input';
+import { FieldInput } from '@/components/ui/field-input';
 import { Toggle } from '@/components/ui/Toggle';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import type { LessonInsert, Lesson } from '@/types/module';
 
 interface LessonFormProps {
@@ -101,18 +101,18 @@ export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <Input
+      <FieldInput
         label="Titre"
         value={values.title}
         onChange={(e) => setValues({ ...values, title: e.target.value })}
         placeholder="Se présenter en anglais"
       />
-      <Input
+      <FieldInput
         label="Description"
         value={values.description}
         onChange={(e) => setValues({ ...values, description: e.target.value })}
       />
-      <Input
+      <FieldInput
         label="Catégorie"
         value={values.category}
         onChange={(e) => setValues({ ...values, category: e.target.value })}
@@ -134,7 +134,7 @@ export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps
             ))}
           </select>
         </div>
-        <Input
+        <FieldInput
           label="Ordre d'affichage"
           type="number"
           min={0}
@@ -187,7 +187,7 @@ export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps
             className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-red-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-red-700 dark:text-slate-300"
           />
           {isUploading && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Envoi en cours…</p>}
-          <Input
+          <FieldInput
             label="Ou colle une URL"
             className="mt-3"
             value={values.content_url}

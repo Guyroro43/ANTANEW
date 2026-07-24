@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Input } from '@/components/ui/Input';
+import { FieldInput } from '@/components/ui/field-input';
 import { Toggle } from '@/components/ui/Toggle';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import type { ModuleInsert, Module } from '@/types/module';
 
 interface ModuleFormProps {
@@ -56,37 +56,37 @@ export function ModuleForm({ initialValue, onSubmit, onCancel }: ModuleFormProps
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <Input
+      <FieldInput
         label="Slug"
         value={values.slug}
         onChange={(e) => setValues({ ...values, slug: e.target.value })}
         placeholder="salutations-premiers-contacts"
       />
-      <Input
+      <FieldInput
         label="Titre"
         value={values.title}
         onChange={(e) => setValues({ ...values, title: e.target.value })}
         placeholder="Salutations & Premiers contacts"
       />
-      <Input
+      <FieldInput
         label="Description"
         value={values.description}
         onChange={(e) => setValues({ ...values, description: e.target.value })}
       />
-      <Input
+      <FieldInput
         label="URL de l'image"
         value={values.image_url}
         onChange={(e) => setValues({ ...values, image_url: e.target.value })}
       />
       <div className="grid grid-cols-2 gap-4">
-        <Input
+        <FieldInput
           label="XP à la clé"
           type="number"
           min={0}
           value={values.xp_reward}
           onChange={(e) => setValues({ ...values, xp_reward: Number(e.target.value) })}
         />
-        <Input
+        <FieldInput
           label="Ordre d'affichage"
           type="number"
           min={0}

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getHomePathForRole, isAdminRole } from '@/lib/roleRouting';
 
 const shortcuts = [
   { href: '/modules', label: 'Modules' },
@@ -25,8 +26,8 @@ export default async function Page() {
     .eq('id', user.id)
     .single();
 
-  if (profile?.role === 'admin') {
-    redirect('/admin/dashboard');
+  if (profile && isAdminRole(profile.role)) {
+    redirect(getHomePathForRole(profile.role));
   }
 
   const { data: streak } = await supabase

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/Spinner';
 import { UserTable } from '@/components/admin/UserTable';
 import type { Profile, SubscriptionPlan } from '@/types/user';

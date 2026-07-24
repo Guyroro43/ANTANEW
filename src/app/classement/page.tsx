@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { Avatar } from '@/components/ui/Avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 export default async function Page() {
   const supabase = createClient();
@@ -51,7 +51,7 @@ export default async function Page() {
                 >
                   <span className="flex items-center gap-3 font-semibold">
                     <span className="w-8 text-slate-500 dark:text-slate-400">#{entry.rank}</span>
-                    <Avatar name={entry.first_name} src={entry.avatar_url} size={36} />
+                    <UserAvatar name={entry.first_name} src={entry.avatar_url} size={36} />
                     {entry.first_name}
                     {isMe && <span className="text-xs font-normal text-red-600 dark:text-yellow-400">(toi)</span>}
                   </span>
