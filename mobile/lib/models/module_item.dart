@@ -3,6 +3,7 @@ class ModuleItem {
   final String slug;
   final String title;
   final String? description;
+  final String? imageUrl;
   final bool isPremium;
   final int xpReward;
   final int orderIndex;
@@ -12,6 +13,7 @@ class ModuleItem {
     required this.slug,
     required this.title,
     required this.description,
+    required this.imageUrl,
     required this.isPremium,
     required this.xpReward,
     required this.orderIndex,
@@ -23,6 +25,7 @@ class ModuleItem {
       slug: map['slug'] as String,
       title: map['title'] as String,
       description: map['description'] as String?,
+      imageUrl: map['image_url'] as String?,
       isPremium: (map['is_premium'] as bool?) ?? false,
       xpReward: (map['xp_reward'] as num?)?.toInt() ?? 0,
       orderIndex: (map['order_index'] as num?)?.toInt() ?? 0,

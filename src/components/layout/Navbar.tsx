@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 
 const links = [
   { href: '/dashboard', label: 'Dashboard' },

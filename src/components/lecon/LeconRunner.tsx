@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { Icon, icons } from '@/components/ui/Icon';
 import { AudioPlayer } from './AudioPlayer';
 import { QuestionQCM } from './QuestionQCM';
-import { ResultatLecon, type Mistake } from './ResultatLecon';
-import type { Question } from '@/types/module';
+import { ResultatLecon, type Mistake, type NewBadge } from './ResultatLecon';
+import type { Question, VocabularyItem } from '@/types/module';
 
 interface LeconRunnerProps {
   lessonId: string;
@@ -14,6 +17,7 @@ interface LeconRunnerProps {
   contentType: 'qcm' | 'pdf' | 'video' | 'audio';
   contentUrl: string | null;
   questions: Question[];
+  vocabulary: VocabularyItem[];
   alreadyCompleted: boolean;
 }
 
@@ -21,6 +25,7 @@ interface CompletionResult {
   xpEarned: number;
   totalXp: number;
   currentStreak: number;
+  newBadges: NewBadge[];
 }
 
 interface SubmittedAnswer {
@@ -33,14 +38,25 @@ interface WrongAnswerFeedback {
   message: string;
 }
 
+function formatElapsed(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60)
+    .toString()
+    .padStart(2, '0');
+  const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+  return `${minutes}:${seconds}`;
+}
+
 export function LeconRunner({
   lessonId,
   moduleSlug,
   contentType,
   contentUrl,
   questions,
+  vocabulary,
   alreadyCompleted,
 }: LeconRunnerProps) {
+  const [vocabIndex, setVocabIndex] = useState(0);
+  const [vocabDone, setVocabDone] = useState(vocabulary.length === 0);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [answers, setAnswers] = useState<SubmittedAnswer[]>([]);
@@ -48,9 +64,21 @@ export function LeconRunner({
   const [result, setResult] = useState<CompletionResult | null>(null);
   const [mistakes, setMistakes] = useState<Mistake[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
+  const startedAt = useRef(Date.now());
+
+  useEffect(() => {
+    if (result) return;
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startedAt.current) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [result]);
 
   const hasQuestions = contentType === 'qcm' && questions.length > 0;
   const currentQuestion = hasQuestions ? questions[questionIndex] : null;
+  const currentVocab = vocabulary[vocabIndex];
   const correctCount = answers.filter((answer) => {
     const question = questions.find((q) => q.id === answer.questionId);
     return question && answer.selectedIndex === question.correct_index;
@@ -101,6 +129,7 @@ export function LeconRunner({
         xpEarned: data?.xp_earned ?? 0,
         totalXp: data?.total_xp ?? 0,
         currentStreak: data?.current_streak ?? 0,
+        newBadges: data?.new_badges ?? [],
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
@@ -130,6 +159,14 @@ export function LeconRunner({
     finishLesson(score, finalAnswers);
   };
 
+  const handleVocabNext = () => {
+    if (vocabIndex + 1 < vocabulary.length) {
+      setVocabIndex((index) => index + 1);
+    } else {
+      setVocabDone(true);
+    }
+  };
+
   if (result) {
     return (
       <ResultatLecon
@@ -139,70 +176,117 @@ export function LeconRunner({
         currentStreak={result.currentStreak}
         moduleSlug={moduleSlug}
         mistakes={mistakes}
+        newBadges={result.newBadges}
       />
     );
   }
 
+  const transition = { duration: prefersReducedMotion ? 0 : 0.35, ease: 'easeOut' as const };
+
   return (
     <div className="flex flex-col gap-6">
-      {contentType === 'video' && contentUrl && (
-        <video controls className="w-full rounded-xl" src={contentUrl} />
-      )}
+      <div className="flex items-center justify-end">
+        <span className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold tabular-nums text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+          ⏱ {formatElapsed(elapsed)}
+        </span>
+      </div>
 
-      {contentType === 'audio' && contentUrl && <AudioPlayer src={contentUrl} />}
-
-      {contentType === 'pdf' && contentUrl && (
-        <div className="flex flex-col gap-3">
-          <iframe
-            src={contentUrl}
-            className="h-[70vh] w-full rounded-xl border border-slate-200 dark:border-slate-700"
-            title="Document PDF"
-          />
-          <a
-            href={contentUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-semibold text-red-600 hover:underline dark:text-yellow-400"
+      <AnimatePresence mode="wait">
+        {!vocabDone && currentVocab ? (
+          <motion.div
+            key={`vocab-${currentVocab.id}`}
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            transition={transition}
+            className="flex flex-col gap-4"
           >
-            Ouvrir le PDF dans un nouvel onglet
-          </a>
-        </div>
-      )}
-
-      {hasQuestions && currentQuestion && (
-        <>
-          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-            Question {questionIndex + 1} / {questions.length}
-          </p>
-          <QuestionQCM
-            questionText={currentQuestion.question_text}
-            options={(Array.isArray(currentQuestion.options) ? currentQuestion.options : []).map(String)}
-            correctIndex={currentQuestion.correct_index}
-            explanation={currentQuestion.explanation}
-            selectedIndex={selected}
-            onSelect={handleAnswer}
-          />
-          {selected !== null && (
-            <Button onClick={handleNext} disabled={isSubmitting}>
-              {questionIndex + 1 < questions.length
-                ? 'Question suivante'
-                : isSubmitting
-                  ? 'Correction en cours…'
-                  : 'Terminer la leçon'}
+            <ProgressBar
+              value={vocabIndex + 1}
+              max={vocabulary.length}
+              label={`Vocabulaire ${vocabIndex + 1} / ${vocabulary.length}`}
+            />
+            <div className="rounded-2xl border border-red-200 bg-gradient-to-br from-white via-yellow-50 to-green-50 p-6 dark:border-slate-700 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950">
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{currentVocab.word}</p>
+              <p className="mt-2 text-slate-700 dark:text-slate-300">{currentVocab.definition}</p>
+              {currentVocab.example && (
+                <p className="mt-3 text-sm italic text-slate-500 dark:text-slate-400">« {currentVocab.example} »</p>
+              )}
+              {currentVocab.audio_url && (
+                <div className="mt-4">
+                  <AudioPlayer src={currentVocab.audio_url} />
+                </div>
+              )}
+            </div>
+            <Button onClick={handleVocabNext}>
+              {vocabIndex + 1 < vocabulary.length ? 'Mot suivant' : 'Passer au QCM'}
             </Button>
-          )}
-        </>
-      )}
+          </motion.div>
+        ) : (
+          <motion.div
+            key={hasQuestions ? `question-${questionIndex}` : 'content'}
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            transition={transition}
+            className="flex flex-col gap-6"
+          >
+            {contentType === 'video' && contentUrl && (
+              <video controls className="w-full rounded-xl" src={contentUrl} />
+            )}
 
-      {!hasQuestions && contentType !== 'qcm' && (
-        <Button onClick={() => finishLesson(null, [])} disabled={isSubmitting}>
-          {isSubmitting ? 'Enregistrement…' : alreadyCompleted ? 'Revalider comme terminée' : 'Marquer comme terminée'}
-        </Button>
-      )}
+            {contentType === 'audio' && contentUrl && <AudioPlayer src={contentUrl} />}
 
-      {contentType === 'qcm' && questions.length === 0 && (
-        <p className="text-slate-600 dark:text-slate-300">Cette leçon n&apos;a pas encore de questions.</p>
-      )}
+            {contentType === 'pdf' && (
+              <p className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                <Icon icon={icons.doc} className="h-5 w-5 flex-shrink-0" />
+                Ce cours est en cours de préparation.
+              </p>
+            )}
+
+            {hasQuestions && currentQuestion && (
+              <>
+                <ProgressBar
+                  value={questionIndex + 1}
+                  max={questions.length}
+                  label={`Question ${questionIndex + 1} / ${questions.length}`}
+                />
+                <QuestionQCM
+                  questionText={currentQuestion.question_text}
+                  options={(Array.isArray(currentQuestion.options) ? currentQuestion.options : []).map(String)}
+                  correctIndex={currentQuestion.correct_index}
+                  explanation={currentQuestion.explanation}
+                  selectedIndex={selected}
+                  onSelect={handleAnswer}
+                />
+                {selected !== null && (
+                  <Button onClick={handleNext} disabled={isSubmitting}>
+                    {questionIndex + 1 < questions.length
+                      ? 'Question suivante'
+                      : isSubmitting
+                        ? 'Correction en cours…'
+                        : 'Terminer la leçon'}
+                  </Button>
+                )}
+              </>
+            )}
+
+            {!hasQuestions && contentType !== 'qcm' && (
+              <Button onClick={() => finishLesson(null, [])} disabled={isSubmitting}>
+                <Icon icon={icons.check} className="h-4 w-4" />
+                {isSubmitting ? 'Enregistrement…' : alreadyCompleted ? 'Revalider comme terminée' : 'Marquer comme terminée'}
+              </Button>
+            )}
+
+            {contentType === 'qcm' && questions.length === 0 && (
+              <p className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                <Icon icon={icons.doc} className="h-5 w-5 flex-shrink-0" />
+                Cette leçon n&apos;a pas encore de questions.
+              </p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {error && <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>}
     </div>

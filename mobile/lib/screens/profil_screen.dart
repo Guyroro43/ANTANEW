@@ -94,15 +94,26 @@ class _ProfilScreenState extends State<ProfilScreen> {
           style: TextStyle(color: AntaColors.slate500),
         ),
         const SizedBox(height: 24),
-        _InfoTile(label: 'Niveau actuel', value: profile.level),
+        _InfoTile(
+          label: 'Niveau actuel',
+          value: profile.level,
+          icon: Icons.shield_outlined,
+        ),
         _InfoTile(
           label: "Niveau d'anglais",
           value: _levelLabels[profile.englishLevel] ?? profile.englishLevel,
+          icon: Icons.menu_book_outlined,
         ),
-        _InfoTile(label: 'XP total', value: '${profile.totalXp}'),
+        _InfoTile(
+          label: 'XP total',
+          value: '${profile.totalXp}',
+          icon: Icons.bolt,
+        ),
         _InfoTile(
           label: 'Streak',
-          value: '$_currentStreak 🔥 (record : $_longestStreak)',
+          value:
+              '$_currentStreak jour${_currentStreak > 1 ? 's' : ''} (record : $_longestStreak)',
+          icon: Icons.local_fire_department,
         ),
         const SizedBox(height: 24),
         Card(
@@ -141,14 +152,24 @@ class _ProfilScreenState extends State<ProfilScreen> {
 class _InfoTile extends StatelessWidget {
   final String label;
   final String value;
+  final IconData icon;
 
-  const _InfoTile({required this.label, required this.value});
+  const _InfoTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
+        leading: CircleAvatar(
+          radius: 18,
+          backgroundColor: AntaColors.red.withValues(alpha: 0.1),
+          child: Icon(icon, color: AntaColors.red, size: 18),
+        ),
         title: Text(
           label,
           style: TextStyle(color: AntaColors.slate500, fontSize: 13),

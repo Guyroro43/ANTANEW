@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { generateQuizQuestions } from '@/lib/anthropic';
+import { generateQuizQuestions, generateQuizQuestionsFromPdf } from '@/lib/anthropic';
 
 export async function POST(request: Request) {
   const supabase = createClient();
@@ -19,6 +19,7 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null);
   const lessonId = body?.lessonId as string | undefined;
+  const source = body?.source === 'pdf' ? 'pdf' : 'text';
   const count = Math.min(Math.max(Number(body?.count) || 5, 1), 10);
 
   if (!lessonId) {
@@ -29,8 +30,6 @@ export async function POST(request: Request) {
   if (!lesson) {
     return NextResponse.json({ error: 'Leçon introuvable.' }, { status: 404 });
   }
-
-  const { data: moduleRow } = await supabase.from('modules').select('title').eq('id', lesson.module_id).single();
 
   const { data: existingQuestions } = await supabase
     .from('questions')
@@ -43,14 +42,34 @@ export async function POST(request: Request) {
 
   let generated;
   try {
-    generated = await generateQuizQuestions({
-      moduleTitle: moduleRow?.title ?? '',
-      lessonTitle: lesson.title,
-      lessonDescription: lesson.description,
-      category: lesson.category,
-      difficulty: lesson.difficulty,
-      count,
-    });
+    if (source === 'pdf') {
+      if (!lesson.source_pdf_path) {
+        return NextResponse.json({ error: 'Aucun PDF source associé à cette leçon.' }, { status: 400 });
+      }
+      const { data: signed, error: signedError } = await supabase.storage
+        .from('lesson-source')
+        .createSignedUrl(lesson.source_pdf_path, 300);
+      if (signedError || !signed) {
+        return NextResponse.json({ error: 'Impossible de lire le PDF source.' }, { status: 500 });
+      }
+      generated = await generateQuizQuestionsFromPdf({
+        pdfUrl: signed.signedUrl,
+        lessonTitle: lesson.title,
+        category: lesson.category,
+        difficulty: lesson.difficulty,
+        count,
+      });
+    } else {
+      const { data: moduleRow } = await supabase.from('modules').select('title').eq('id', lesson.module_id).single();
+      generated = await generateQuizQuestions({
+        moduleTitle: moduleRow?.title ?? '',
+        lessonTitle: lesson.title,
+        lessonDescription: lesson.description,
+        category: lesson.category,
+        difficulty: lesson.difficulty,
+        count,
+      });
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Échec de la génération IA.";
     return NextResponse.json({ error: message }, { status: 502 });

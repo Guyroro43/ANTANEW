@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { LessonForm } from '@/components/admin/LessonForm';
+import { Icon, icons } from '@/components/ui/Icon';
 import type { Module, Lesson, LessonInsert } from '@/types/module';
 
 export default function Page() {
@@ -99,7 +100,10 @@ export default function Page() {
           </p>
           <h1 className="mt-2 text-3xl font-black text-slate-900 dark:text-white">Leçons</h1>
         </div>
-        <Button onClick={openCreate}>+ Nouvelle leçon</Button>
+        <Button onClick={openCreate}>
+          <Icon icon={icons.plus} className="h-4 w-4" />
+          Nouvelle leçon
+        </Button>
       </div>
 
       <div className="mt-8 flex flex-col gap-4">
@@ -115,7 +119,7 @@ export default function Page() {
                     {lesson.is_published ? 'Publiée' : 'Brouillon'}
                   </Badge>
                   <Badge variant="default">{lesson.content_type.toUpperCase()}</Badge>
-                  <Badge variant={lesson.access_level === 'premium' ? 'danger' : lesson.access_level === 'all' ? 'success' : 'default'}>
+                  <Badge variant={lesson.access_level === 'premium' ? 'destructive' : lesson.access_level === 'all' ? 'success' : 'default'}>
                     {lesson.access_level === 'premium' ? 'Premium' : lesson.access_level === 'all' ? 'Tout le monde' : 'Gratuit'}
                   </Badge>
                 </div>

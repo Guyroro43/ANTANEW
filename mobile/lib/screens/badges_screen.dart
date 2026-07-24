@@ -110,17 +110,32 @@ class _BadgesScreenState extends State<BadgesScreen> {
                       overflow: TextOverflow.fade,
                     ),
                   ),
-                  Text(
-                    badge.isUnlocked
-                        ? 'Débloqué le ${dateFormat.format(badge.earnedAt!)}'
-                        : '🔒 Non débloqué',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: badge.isUnlocked
-                          ? AntaColors.green
-                          : AntaColors.slate500,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!badge.isUnlocked) ...[
+                        Icon(
+                          Icons.lock_outline,
+                          size: 12,
+                          color: AntaColors.slate500,
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      Flexible(
+                        child: Text(
+                          badge.isUnlocked
+                              ? 'Débloqué le ${dateFormat.format(badge.earnedAt!)}'
+                              : 'Non débloqué',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: badge.isUnlocked
+                                ? AntaColors.green
+                                : AntaColors.slate500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

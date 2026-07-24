@@ -24,6 +24,28 @@ export interface GeneratedQuestion {
   explanation: string;
 }
 
+const quizQuestionsSchema = {
+  type: 'object',
+  properties: {
+    questions: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          question_text: { type: 'string' },
+          options: { type: 'array', items: { type: 'string' } },
+          correct_index: { type: 'integer' },
+          explanation: { type: 'string' },
+        },
+        required: ['question_text', 'options', 'correct_index', 'explanation'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['questions'],
+  additionalProperties: false,
+} as const;
+
 interface GenerateQuizQuestionsParams {
   moduleTitle: string;
   lessonTitle: string;
@@ -47,30 +69,7 @@ export async function generateQuizQuestions({
     thinking: { type: 'adaptive' },
     output_config: {
       effort: 'medium',
-      format: {
-        type: 'json_schema',
-        schema: {
-          type: 'object',
-          properties: {
-            questions: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  question_text: { type: 'string' },
-                  options: { type: 'array', items: { type: 'string' } },
-                  correct_index: { type: 'integer' },
-                  explanation: { type: 'string' },
-                },
-                required: ['question_text', 'options', 'correct_index', 'explanation'],
-                additionalProperties: false,
-              },
-            },
-          },
-          required: ['questions'],
-          additionalProperties: false,
-        },
-      },
+      format: { type: 'json_schema', schema: quizQuestionsSchema },
     },
     messages: [
       {
@@ -90,6 +89,63 @@ Consignes :
 - Chaque question a exactement 4 options, une seule correcte.
 - "correct_index" est l'index (0 à 3) de la bonne option dans le tableau "options".
 - "explanation" justifie brièvement la bonne réponse, en français, de façon pédagogique.`,
+      },
+    ],
+  });
+
+  return readJsonResponse<{ questions: GeneratedQuestion[] }>(response).questions;
+}
+
+interface GenerateQuizQuestionsFromPdfParams {
+  pdfUrl: string;
+  lessonTitle: string;
+  category: string | null;
+  difficulty: string | null;
+  count: number;
+}
+
+export async function generateQuizQuestionsFromPdf({
+  pdfUrl,
+  lessonTitle,
+  category,
+  difficulty,
+  count,
+}: GenerateQuizQuestionsFromPdfParams): Promise<GeneratedQuestion[]> {
+  const response = await getClient().messages.create({
+    model: 'claude-opus-4-8',
+    max_tokens: 4096,
+    thinking: { type: 'adaptive' },
+    output_config: {
+      effort: 'medium',
+      format: { type: 'json_schema', schema: quizQuestionsSchema },
+    },
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'document',
+            source: { type: 'url', url: pdfUrl },
+          },
+          {
+            type: 'text',
+            text: `Tu es concepteur pédagogique pour ANTA, une plateforme d'apprentissage de l'anglais pour de jeunes Africains (Côte d'Ivoire).
+
+Analyse le contenu de ce document PDF, qui sert de support à la leçon suivante :
+
+Leçon : ${lessonTitle}
+${category ? `Catégorie : ${category}` : ''}
+Niveau : ${difficulty ?? 'debutant'}
+
+Génère exactement ${count} questions à choix multiple (QCM) en français pour évaluer la compréhension de ce document.
+
+Consignes :
+- Base-toi uniquement sur le contenu réel du document, pas sur des connaissances générales.
+- Chaque question a exactement 4 options, une seule correcte.
+- "correct_index" est l'index (0 à 3) de la bonne option dans le tableau "options".
+- "explanation" justifie brièvement la bonne réponse, en français, de façon pédagogique.`,
+          },
+        ],
       },
     ],
   });

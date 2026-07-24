@@ -1,4 +1,11 @@
-import { Reveal } from './Reveal';
+'use client';
+
+import { useRef } from 'react';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const steps = [
   {
@@ -24,27 +31,54 @@ const steps = [
 ];
 
 export function HowItWorks() {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useGSAP(
+    () => {
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const duration = reduceMotion ? 0 : 0.6;
+
+      gsap.fromTo(
+        '.how-it-works-heading',
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration, ease: 'power2.out', scrollTrigger: { trigger: sectionRef.current, start: 'top 80%' } },
+      );
+      gsap.fromTo(
+        '.how-it-works-step',
+        { opacity: 0, y: 32 },
+        {
+          opacity: 1,
+          y: 0,
+          duration,
+          stagger: reduceMotion ? 0 : 0.15,
+          ease: 'power2.out',
+          scrollTrigger: { trigger: sectionRef.current, start: 'top 75%' },
+        },
+      );
+    },
+    { scope: sectionRef },
+  );
+
   return (
-    <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-      <Reveal>
-        <div className="max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-red-600 dark:text-yellow-400">Comment ça marche</p>
-          <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl dark:text-white">
-            Une expérience d’apprentissage pensée pour rester engagée au quotidien.
-          </h2>
-        </div>
-      </Reveal>
+    <section ref={sectionRef} className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+      <div className="how-it-works-heading max-w-2xl">
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-red-600 dark:text-yellow-400">Comment ça marche</p>
+        <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl dark:text-white">
+          Une expérience d’apprentissage pensée pour rester engagée au quotidien.
+        </h2>
+      </div>
       <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {steps.map((step, index) => (
-          <Reveal key={step.title} delay={index * 0.1}>
-            <div className="h-full rounded-[1.5rem] border border-red-200 bg-gradient-to-br from-white via-yellow-50 to-green-50 p-6 shadow-sm dark:border-slate-700 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-lg font-bold text-red-700 dark:bg-green-900/60 dark:text-green-300">
-                {step.icon}
-              </div>
-              <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-white">{step.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">{step.text}</p>
+        {steps.map((step) => (
+          <div
+            key={step.title}
+            className="how-it-works-step h-full rounded-[1.5rem] border border-red-200 bg-gradient-to-br from-white via-yellow-50 to-green-50 p-6 shadow-sm dark:border-slate-700 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-lg font-bold text-red-700 dark:bg-green-900/60 dark:text-green-300">
+              {step.icon}
             </div>
-          </Reveal>
+            <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-white">{step.title}</h3>
+            <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">{step.text}</p>
+          </div>
         ))}
       </div>
     </section>

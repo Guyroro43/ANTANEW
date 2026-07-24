@@ -47,9 +47,27 @@ class _AbonnementScreenState extends State<AbonnementScreen> {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        Text(
-          _isPremium ? 'Ton abonnement Premium' : 'Passe à Premium',
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: AntaColors.yellow.withValues(alpha: 0.25),
+              child: const Icon(
+                Icons.workspace_premium,
+                color: Color(0xFFB45309),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _isPremium ? 'Ton abonnement Premium' : 'Passe à Premium',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Text(

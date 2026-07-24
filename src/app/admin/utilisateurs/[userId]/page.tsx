@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/Spinner';
 import { formatDate } from '@/utils/format';
 import type { Profile, UserRole, SubscriptionPlan } from '@/types/user';
@@ -40,7 +40,7 @@ export default function Page() {
     if (!user) return;
     setIsSaving(true);
     const supabase = createClient();
-    await supabase.from('profiles').update({ role }).eq('id', user.id);
+    await supabase.rpc('admin_update_profile', { p_user_id: user.id, p_role: role });
     await loadData();
     setIsSaving(false);
   };
@@ -49,7 +49,7 @@ export default function Page() {
     if (!user) return;
     setIsSaving(true);
     const supabase = createClient();
-    await supabase.from('profiles').update({ subscription_plan }).eq('id', user.id);
+    await supabase.rpc('admin_update_profile', { p_user_id: user.id, p_subscription_plan: subscription_plan });
     await loadData();
     setIsSaving(false);
   };
@@ -80,7 +80,7 @@ export default function Page() {
       </Link>
 
       <div className="mt-4 flex flex-wrap items-center gap-4">
-        <Avatar name={user.first_name} src={user.avatar_url} size={56} />
+        <UserAvatar name={user.first_name} src={user.avatar_url} size={56} />
         <div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white">{user.first_name}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">{user.email ?? 'Email inconnu'}</p>
@@ -110,7 +110,7 @@ export default function Page() {
         <Card>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">Rôle</h2>
           <div className="mt-3 flex items-center gap-3">
-            <Badge variant={user.role === 'admin' ? 'danger' : 'default'}>{user.role}</Badge>
+            <Badge variant={user.role === 'admin' ? 'destructive' : 'default'}>{user.role}</Badge>
             <Button
               variant="outline"
               size="sm"
@@ -149,7 +149,7 @@ export default function Page() {
               {transactions.map((tx) => (
                 <li key={tx.id} className="flex items-center justify-between py-3">
                   <span>{formatDate(tx.created_at)} — {tx.payment_method ?? '—'}</span>
-                  <Badge variant={tx.status === 'success' ? 'success' : tx.status === 'failed' ? 'danger' : 'warning'}>
+                  <Badge variant={tx.status === 'success' ? 'success' : tx.status === 'failed' ? 'destructive' : 'warning'}>
                     {tx.status}
                   </Badge>
                 </li>

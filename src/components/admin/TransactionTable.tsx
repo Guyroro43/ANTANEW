@@ -1,13 +1,13 @@
-import { Badge } from '@/components/ui/Badge';
+import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate } from '@/utils/format';
 import type { Transaction } from '@/types/abonnement';
 
-type BadgeVariant = 'default' | 'success' | 'warning' | 'danger';
+type BadgeVariant = 'default' | 'success' | 'warning' | 'destructive';
 
 const statusVariant: Record<Transaction['status'], BadgeVariant> = {
   success: 'success',
   pending: 'warning',
-  failed: 'danger',
+  failed: 'destructive',
   refunded: 'default',
 };
 
@@ -47,7 +47,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           {transactions.map((transaction) => (
             <tr key={transaction.id} className="border-b border-slate-100 dark:border-slate-800">
               <td className="py-3 pr-4 font-semibold text-slate-900 dark:text-white">{transaction.userName}</td>
-              <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
+              <td className="py-3 pr-4 tabular-nums text-slate-600 dark:text-slate-300">
                 {formatCurrency(transaction.amount, transaction.currency)}
               </td>
               <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">{transaction.payment_method ?? '—'}</td>

@@ -3,6 +3,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/app_theme.dart';
 import '../models/leaderboard_entry.dart';
 
+const _medalColors = {
+  1: Color(0xFFFACC15),
+  2: Color(0xFFCBD5E1),
+  3: Color(0xFFD97706),
+};
+
 class ClassementScreen extends StatefulWidget {
   const ClassementScreen({super.key});
 
@@ -71,14 +77,20 @@ class _ClassementScreenState extends State<ClassementScreen> {
               color: isMe ? AntaColors.yellow.withValues(alpha: 0.15) : null,
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: AntaColors.red,
-                  child: Text(
-                    '${entry.rank}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  backgroundColor: _medalColors[entry.rank] ?? AntaColors.red,
+                  child: _medalColors.containsKey(entry.rank)
+                      ? const Icon(
+                          Icons.emoji_events,
+                          color: Colors.white,
+                          size: 18,
+                        )
+                      : Text(
+                          '${entry.rank}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
                 title: Text(
                   entry.firstName + (isMe ? ' (toi)' : ''),

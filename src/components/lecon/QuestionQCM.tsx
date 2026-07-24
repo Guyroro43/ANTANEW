@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/utils/cn';
+import { Icon, icons } from '@/components/ui/Icon';
 
 interface QuestionQCMProps {
   questionText: string;
@@ -35,7 +36,7 @@ export function QuestionQCM({
               disabled={answered}
               onClick={() => onSelect(index)}
               className={cn(
-                'rounded-xl border px-4 py-3 text-left text-sm font-medium transition disabled:cursor-not-allowed',
+                'flex cursor-pointer items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm font-medium transition active:scale-[0.99] disabled:cursor-not-allowed',
                 !answered && 'border-slate-300 hover:border-red-400 dark:border-slate-600',
                 answered &&
                   isCorrect &&
@@ -47,7 +48,9 @@ export function QuestionQCM({
                 answered && !isSelected && !isCorrect && 'border-slate-200 opacity-60 dark:border-slate-700',
               )}
             >
-              {option}
+              <span>{option}</span>
+              {answered && isCorrect && <Icon icon={icons.check} className="h-4 w-4 flex-shrink-0" />}
+              {answered && isSelected && !isCorrect && <Icon icon={icons.x} className="h-4 w-4 flex-shrink-0" />}
             </button>
           );
         })}

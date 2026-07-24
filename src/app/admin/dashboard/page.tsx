@@ -4,6 +4,8 @@ import { ActivityChart } from '@/components/admin/ActivityChart';
 import { UserTable } from '@/components/admin/UserTable';
 import { TransactionTable, type TransactionRow } from '@/components/admin/TransactionTable';
 import { formatCurrency } from '@/utils/format';
+import { icons } from '@/components/ui/Icon';
+import { Reveal } from '@/components/ui/Reveal';
 
 function startOfDay(date: Date) {
   const copy = new Date(date);
@@ -88,36 +90,52 @@ export default async function Page() {
 
   return (
     <main className="px-8 py-10">
-      <p className="text-sm font-semibold uppercase tracking-[0.3em] text-red-600 dark:text-yellow-400">Admin</p>
-      <h1 className="mt-2 text-3xl font-black text-slate-900 dark:text-white">Vue d'ensemble</h1>
+      <Reveal>
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-red-600 dark:text-yellow-400">Admin</p>
+        <h1 className="mt-2 text-3xl font-black text-slate-900 dark:text-white">Vue d&apos;ensemble</h1>
+      </Reveal>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Inscrits total" value={String(totalUsers ?? 0)} icon="👥" />
-        <StatCard label="Actifs 7 jours" value={String(activeUsers7d)} icon="⚡" />
-        <StatCard label="Comptes Premium" value={String(premiumUsers ?? 0)} icon="💎" />
-        <StatCard label="Revenu du mois" value={formatCurrency(monthlyRevenue)} icon="💰" />
+        <Reveal delay={0}>
+          <StatCard label="Inscrits total" value={String(totalUsers ?? 0)} icon={icons.users} />
+        </Reveal>
+        <Reveal delay={0.05}>
+          <StatCard label="Actifs 7 jours" value={String(activeUsers7d)} icon={icons.bolt} />
+        </Reveal>
+        <Reveal delay={0.1}>
+          <StatCard label="Comptes Premium" value={String(premiumUsers ?? 0)} icon={icons.crown} />
+        </Reveal>
+        <Reveal delay={0.15}>
+          <StatCard label="Revenu du mois" value={formatCurrency(monthlyRevenue)} icon={icons.cash} />
+        </Reveal>
       </div>
 
-      <div className="mt-8 rounded-[1.5rem] border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Activité des 7 derniers jours</h2>
-        <div className="mt-4">
-          <ActivityChart days={days} />
+      <Reveal delay={0.2}>
+        <div className="mt-8 rounded-[1.5rem] border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Activité des 7 derniers jours</h2>
+          <div className="mt-4">
+            <ActivityChart days={days} />
+          </div>
         </div>
-      </div>
+      </Reveal>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Derniers inscrits</h2>
-          <div className="mt-4">
-            <UserTable users={latestUsers ?? []} />
+        <Reveal delay={0.25}>
+          <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Derniers inscrits</h2>
+            <div className="mt-4">
+              <UserTable users={latestUsers ?? []} />
+            </div>
           </div>
-        </div>
-        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Dernières transactions</h2>
-          <div className="mt-4">
-            <TransactionTable transactions={transactionRows} />
+        </Reveal>
+        <Reveal delay={0.3}>
+          <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Dernières transactions</h2>
+            <div className="mt-4">
+              <TransactionTable transactions={transactionRows} />
+            </div>
           </div>
-        </div>
+        </Reveal>
       </div>
     </main>
   );

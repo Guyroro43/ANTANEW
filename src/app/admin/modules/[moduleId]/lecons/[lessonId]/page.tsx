@@ -4,32 +4,39 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { QuestionForm } from '@/components/admin/QuestionForm';
-import type { Lesson, Question, QuestionInsert } from '@/types/module';
+import { VocabularyForm } from '@/components/admin/VocabularyForm';
+import { Icon, icons } from '@/components/ui/Icon';
+import type { Lesson, Question, QuestionInsert, VocabularyItem, VocabularyInsert } from '@/types/module';
 
 export default function Page() {
   const { moduleId, lessonId } = useParams<{ moduleId: string; lessonId: string }>();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [vocabulary, setVocabulary] = useState<VocabularyItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [vocabModalOpen, setVocabModalOpen] = useState(false);
+  const [editingVocab, setEditingVocab] = useState<VocabularyItem | null>(null);
+  const [isGenerating, setIsGenerating] = useState<'text' | 'pdf' | null>(null);
   const [generateError, setGenerateError] = useState<string | null>(null);
 
   const loadData = async () => {
     const supabase = createClient();
-    const [{ data: lessonData }, { data: questionsData }] = await Promise.all([
+    const [{ data: lessonData }, { data: questionsData }, { data: vocabData }] = await Promise.all([
       supabase.from('lessons').select('*').eq('id', lessonId).single(),
       supabase.from('questions').select('*').eq('lesson_id', lessonId).order('order_index'),
+      supabase.from('lesson_vocabulary').select('*').eq('lesson_id', lessonId).order('order_index'),
     ]);
     setLesson(lessonData ?? null);
     setQuestions(questionsData ?? []);
+    setVocabulary(vocabData ?? []);
     setIsLoading(false);
   };
 
@@ -74,14 +81,14 @@ export default function Page() {
     await loadData();
   };
 
-  const handleGenerate = async () => {
-    setIsGenerating(true);
+  const handleGenerate = async (source: 'text' | 'pdf') => {
+    setIsGenerating(source);
     setGenerateError(null);
     try {
       const response = await fetch('/api/admin/questions/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lessonId, count: 5 }),
+        body: JSON.stringify({ lessonId, count: 5, source }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -91,8 +98,38 @@ export default function Page() {
     } catch (err) {
       setGenerateError(err instanceof Error ? err.message : "Échec de la génération.");
     } finally {
-      setIsGenerating(false);
+      setIsGenerating(null);
     }
+  };
+
+  const openCreateVocab = () => {
+    setEditingVocab(null);
+    setVocabModalOpen(true);
+  };
+
+  const openEditVocab = (item: VocabularyItem) => {
+    setEditingVocab(item);
+    setVocabModalOpen(true);
+  };
+
+  const handleVocabSubmit = async (values: Omit<VocabularyInsert, 'lesson_id'>) => {
+    const supabase = createClient();
+    if (editingVocab) {
+      const { error } = await supabase.from('lesson_vocabulary').update(values).eq('id', editingVocab.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabase.from('lesson_vocabulary').insert({ ...values, lesson_id: lessonId });
+      if (error) throw new Error(error.message);
+    }
+    setVocabModalOpen(false);
+    await loadData();
+  };
+
+  const handleVocabDelete = async (item: VocabularyItem) => {
+    if (!window.confirm('Supprimer ce mot de vocabulaire ?')) return;
+    const supabase = createClient();
+    await supabase.from('lesson_vocabulary').delete().eq('id', item.id);
+    await loadData();
   };
 
   if (isLoading) {
@@ -119,18 +156,63 @@ export default function Page() {
       <Link href={`/admin/modules/${moduleId}`} className="text-sm font-semibold text-red-600 hover:underline dark:text-yellow-400">
         ← Retour aux leçons
       </Link>
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-red-600 dark:text-yellow-400">
-            {lesson.title}
-          </p>
-          <h1 className="mt-2 text-3xl font-black text-slate-900 dark:text-white">Questions</h1>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleGenerate} disabled={isGenerating}>
-            {isGenerating ? 'Génération…' : '✨ Générer avec l’IA'}
+
+      <div className="mt-4">
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-red-600 dark:text-yellow-400">
+          {lesson.title}
+        </p>
+      </div>
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+        <h2 className="text-2xl font-black text-slate-900 dark:text-white">Vocabulaire</h2>
+        <Button variant="outline" onClick={openCreateVocab}>
+          <Icon icon={icons.plus} className="h-4 w-4" />
+          Ajouter un mot
+        </Button>
+      </div>
+      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        Affiché en flashcards avant le QCM, dans l&apos;ordre choisi ici. Optionnel — laisse vide pour passer directement au QCM.
+      </p>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {vocabulary.length === 0 ? (
+          <p className="text-slate-600 dark:text-slate-300">Aucun mot de vocabulaire pour cette leçon.</p>
+        ) : (
+          vocabulary.map((item) => (
+            <Card key={item.id} className="flex flex-col gap-2">
+              <p className="font-bold text-slate-900 dark:text-white">{item.word}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300">{item.definition}</p>
+              {item.example && <p className="text-xs italic text-slate-500 dark:text-slate-400">{item.example}</p>}
+              <div className="mt-1 flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => openEditVocab(item)}>
+                  Éditer
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => handleVocabDelete(item)}>
+                  Supprimer
+                </Button>
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
+
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-8 dark:border-slate-800">
+        <h2 className="text-2xl font-black text-slate-900 dark:text-white">Questions</h2>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => handleGenerate('text')} disabled={isGenerating !== null}>
+            <Icon icon={icons.sparkles} className="h-4 w-4" />
+            {isGenerating === 'text' ? 'Génération…' : 'Générer avec l’IA'}
           </Button>
-          <Button onClick={openCreate}>+ Nouvelle question</Button>
+          {lesson.source_pdf_path && (
+            <Button variant="outline" onClick={() => handleGenerate('pdf')} disabled={isGenerating !== null}>
+              <Icon icon={icons.doc} className="h-4 w-4" />
+              {isGenerating === 'pdf' ? 'Génération…' : 'Générer depuis le PDF'}
+            </Button>
+          )}
+          <Button onClick={openCreate}>
+            <Icon icon={icons.plus} className="h-4 w-4" />
+            Nouvelle question
+          </Button>
         </div>
       </div>
 
@@ -188,6 +270,15 @@ export default function Page() {
           initialValue={editingQuestion ?? undefined}
           onSubmit={handleSubmit}
           onCancel={() => setModalOpen(false)}
+        />
+      </Modal>
+
+      <Modal open={vocabModalOpen} onClose={() => setVocabModalOpen(false)} title={editingVocab ? 'Éditer le mot' : 'Nouveau mot de vocabulaire'}>
+        <VocabularyForm
+          key={editingVocab?.id ?? 'new'}
+          initialValue={editingVocab ?? undefined}
+          onSubmit={handleVocabSubmit}
+          onCancel={() => setVocabModalOpen(false)}
         />
       </Modal>
     </main>

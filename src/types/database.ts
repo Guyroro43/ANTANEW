@@ -80,6 +80,7 @@ export interface Database {
           is_published: boolean;
           content_type: 'qcm' | 'pdf' | 'video' | 'audio';
           content_url: string | null;
+          source_pdf_path: string | null;
           access_level: 'free' | 'premium' | 'all';
           created_at: string;
         };
@@ -94,6 +95,7 @@ export interface Database {
           is_published?: boolean;
           content_type?: 'qcm' | 'pdf' | 'video' | 'audio';
           content_url?: string | null;
+          source_pdf_path?: string | null;
           access_level?: 'free' | 'premium' | 'all';
           created_at?: string;
         };
@@ -126,6 +128,30 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['questions']['Insert']>;
+        Relationships: [];
+      };
+      lesson_vocabulary: {
+        Row: {
+          id: string;
+          lesson_id: string;
+          word: string;
+          definition: string;
+          example: string | null;
+          audio_url: string | null;
+          order_index: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lesson_id: string;
+          word: string;
+          definition: string;
+          example?: string | null;
+          audio_url?: string | null;
+          order_index?: number;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['lesson_vocabulary']['Insert']>;
         Relationships: [];
       };
       progress: {
@@ -280,7 +306,12 @@ export interface Database {
           xp_earned: number;
           total_xp: number;
           current_streak: number;
+          new_badges: { slug: string; name: string; icon: string }[];
         };
+      };
+      admin_update_profile: {
+        Args: { p_user_id: string; p_role?: string | null; p_subscription_plan?: string | null };
+        Returns: void;
       };
     };
   };

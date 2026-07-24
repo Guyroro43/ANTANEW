@@ -2,9 +2,9 @@
 
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Input } from '@/components/ui/Input';
+import { FieldInput } from '@/components/ui/field-input';
 import { Toggle } from '@/components/ui/Toggle';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import type { LessonInsert, Lesson } from '@/types/module';
 
 interface LessonFormProps {
@@ -17,7 +17,6 @@ const difficulties = ['debutant', 'intermediaire', 'avance'] as const;
 
 const contentTypes = [
   { value: 'qcm', label: 'QCM (questions)' },
-  { value: 'pdf', label: 'PDF' },
   { value: 'video', label: 'Vidéo' },
   { value: 'audio', label: 'Audio' },
 ] as const;
@@ -38,10 +37,12 @@ export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps
     is_published: initialValue?.is_published ?? false,
     content_type: initialValue?.content_type ?? 'qcm',
     content_url: initialValue?.content_url ?? '',
+    source_pdf_path: initialValue?.source_pdf_path ?? '',
     access_level: initialValue?.access_level ?? 'free',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -56,12 +57,31 @@ export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps
       const { error: uploadError } = await supabase.storage.from('lesson-media').upload(path, file);
       if (uploadError) throw new Error(uploadError.message);
 
-      const { data } = supabase.storage.from('lesson-media').getPublicUrl(path);
-      setValues((prev) => ({ ...prev, content_url: data.publicUrl }));
+      setValues((prev) => ({ ...prev, content_url: path }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Échec de l'upload du fichier.");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handlePdfChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingPdf(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const path = `${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage.from('lesson-source').upload(path, file);
+      if (uploadError) throw new Error(uploadError.message);
+
+      setValues((prev) => ({ ...prev, source_pdf_path: path }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Échec de l'upload du PDF.");
+    } finally {
+      setIsUploadingPdf(false);
     }
   };
 
@@ -90,6 +110,7 @@ export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps
         is_published: values.is_published,
         content_type: values.content_type,
         content_url: values.content_url || null,
+        source_pdf_path: values.source_pdf_path || null,
         access_level: values.access_level,
       });
     } catch (err) {
@@ -101,18 +122,18 @@ export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <Input
+      <FieldInput
         label="Titre"
         value={values.title}
         onChange={(e) => setValues({ ...values, title: e.target.value })}
         placeholder="Se présenter en anglais"
       />
-      <Input
+      <FieldInput
         label="Description"
         value={values.description}
         onChange={(e) => setValues({ ...values, description: e.target.value })}
       />
-      <Input
+      <FieldInput
         label="Catégorie"
         value={values.category}
         onChange={(e) => setValues({ ...values, category: e.target.value })}
@@ -134,7 +155,7 @@ export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps
             ))}
           </select>
         </div>
-        <Input
+        <FieldInput
           label="Ordre d'affichage"
           type="number"
           min={0}
@@ -177,24 +198,27 @@ export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps
       {values.content_type !== 'qcm' && (
         <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
           <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
-            Fichier {values.content_type === 'pdf' ? 'PDF' : values.content_type === 'video' ? 'vidéo' : 'audio'}
+            Fichier {values.content_type === 'video' ? 'vidéo' : 'audio'}
           </label>
           <input
             type="file"
-            accept={values.content_type === 'pdf' ? 'application/pdf' : values.content_type === 'video' ? 'video/*' : 'audio/*'}
+            accept={values.content_type === 'video' ? 'video/*' : 'audio/*'}
             onChange={handleFileChange}
             disabled={isUploading}
             className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-red-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-red-700 dark:text-slate-300"
           />
           {isUploading && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Envoi en cours…</p>}
-          <Input
-            label="Ou colle une URL"
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Stocké de façon privée : lu en interne par l&apos;app via une URL signée temporaire, jamais téléchargeable directement.
+          </p>
+          <FieldInput
+            label="Ou colle une URL externe"
             className="mt-3"
             value={values.content_url}
             onChange={(e) => setValues({ ...values, content_url: e.target.value })}
             placeholder="https://…"
           />
-          {values.content_url && (
+          {values.content_url && /^https?:\/\//.test(values.content_url) && (
             <a
               href={values.content_url}
               target="_blank"
@@ -203,6 +227,28 @@ export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps
             >
               Prévisualiser le fichier
             </a>
+          )}
+        </div>
+      )}
+
+      {values.content_type === 'qcm' && (
+        <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+          <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+            PDF source pour génération IA (optionnel)
+          </label>
+          <input
+            type="file"
+            accept="application/pdf"
+            onChange={handlePdfChange}
+            disabled={isUploadingPdf}
+            className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-red-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-red-700 dark:text-slate-300"
+          />
+          {isUploadingPdf && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Envoi en cours…</p>}
+          {values.source_pdf_path && (
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              PDF associé : {values.source_pdf_path.replace(/^\d+-/, '')}. Jamais visible par les apprenants — sert uniquement à
+              générer les questions QCM (bouton « Générer depuis le PDF » sur la page des questions de cette leçon).
+            </p>
           )}
         </div>
       )}

@@ -20,3 +20,7 @@ next-env.d.ts
 .DS_Store
 *.log
 npm-debug.log*
+*.hprof
+
+# brief videos (large, reference-only, not app assets)
+brief/*.mp4

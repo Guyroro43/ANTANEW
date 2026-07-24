@@ -12,6 +12,10 @@ export type Question = Database['public']['Tables']['questions']['Row'];
 export type QuestionInsert = Database['public']['Tables']['questions']['Insert'];
 export type QuestionUpdate = Database['public']['Tables']['questions']['Update'];
 
+export type VocabularyItem = Database['public']['Tables']['lesson_vocabulary']['Row'];
+export type VocabularyInsert = Database['public']['Tables']['lesson_vocabulary']['Insert'];
+export type VocabularyUpdate = Database['public']['Tables']['lesson_vocabulary']['Update'];
+
 export interface ModuleWithLessons extends Module {
   lessons: Lesson[];
 }

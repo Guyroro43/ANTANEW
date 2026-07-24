@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Reveal } from './Reveal';
+import { Reveal } from '@/components/ui/Reveal';
 
 const days = [
   'Salutations',

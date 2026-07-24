@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/input';
+import { FieldInput } from '@/components/ui/field-input';
+import { Button } from '@/components/ui/button';
 import type { QuestionInsert, Question } from '@/types/module';
 
 interface QuestionFormProps {
@@ -70,7 +71,7 @@ export function QuestionForm({ initialValue, onSubmit, onCancel }: QuestionFormP
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <Input
+      <FieldInput
         label="Question"
         value={questionText}
         onChange={(e) => setQuestionText(e.target.value)}
@@ -110,12 +111,12 @@ export function QuestionForm({ initialValue, onSubmit, onCancel }: QuestionFormP
         </Button>
       </div>
 
-      <Input
+      <FieldInput
         label="Explication (optionnel)"
         value={explanation}
         onChange={(e) => setExplanation(e.target.value)}
       />
-      <Input
+      <FieldInput
         label="Ordre d'affichage"
         type="number"
         min={0}

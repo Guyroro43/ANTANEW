@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge } from '@/components/ui/Badge';
+import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/utils/format';
 import type { Profile } from '@/types/user';
 
@@ -39,7 +39,7 @@ export function UserTable({ users, onRowClick }: UserTableProps) {
             >
               <td className="py-3 pr-4 font-semibold text-slate-900 dark:text-white">{user.first_name}</td>
               <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">{user.email ?? '—'}</td>
-              <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">{user.total_xp}</td>
+              <td className="py-3 pr-4 tabular-nums text-slate-600 dark:text-slate-300">{user.total_xp}</td>
               <td className="py-3 pr-4">
                 <Badge variant={user.subscription_plan === 'premium' ? 'success' : 'default'}>
                   {user.subscription_plan === 'premium' ? 'Premium' : 'Starter'}

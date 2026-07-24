@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/app_theme.dart';
 import '../models/module_item.dart';
 import '../models/lesson_item.dart';
+import 'lecon_screen.dart';
 
 const _contentTypeLabels = {
   'qcm': 'QCM',
@@ -10,6 +11,15 @@ const _contentTypeLabels = {
   'video': 'Vidéo',
   'audio': 'Audio',
 };
+
+const _contentTypeIcons = {
+  'qcm': Icons.quiz_outlined,
+  'pdf': Icons.description_outlined,
+  'video': Icons.play_circle_outline,
+  'audio': Icons.graphic_eq,
+};
+
+enum _LessonTab { todo, done }
 
 class ModuleDetailScreen extends StatefulWidget {
   final ModuleItem module;
@@ -29,6 +39,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
   bool _isLoading = true;
   List<LessonItem> _lessons = [];
   Set<String> _completedLessonIds = {};
+  _LessonTab _tab = _LessonTab.todo;
   String? _error;
 
   bool get _moduleLocked => widget.module.isPremium && !widget.isPremiumUser;
@@ -74,18 +85,31 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
     }
   }
 
-  void _onLessonTap(LessonItem lesson, bool locked) {
+  Future<void> _onLessonTap(LessonItem lesson, bool locked) async {
     if (locked) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('🔒 Réservé aux membres Premium.')),
+        const SnackBar(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lock_outline, size: 16, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Réservé aux membres Premium.'),
+            ],
+          ),
+        ),
       );
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('🚧 Le moteur de leçon arrive bientôt sur mobile.'),
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LeconScreen(
+          lesson: lesson,
+          alreadyCompleted: _completedLessonIds.contains(lesson.id),
+        ),
       ),
     );
+    _load();
   }
 
   @override
@@ -107,7 +131,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('🔒', style: TextStyle(fontSize: 48)),
+              Icon(Icons.lock_outline, size: 48, color: AntaColors.slate500),
               const SizedBox(height: 12),
               const Text(
                 'Ce module est réservé aux membres Premium.',
@@ -124,53 +148,172 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
       return const Center(child: Text("Aucune leçon publiée pour l'instant."));
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(20),
-      itemCount: _lessons.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final lesson = _lessons[index];
-        final locked = lesson.accessLevel == 'premium' && !widget.isPremiumUser;
-        final completed = _completedLessonIds.contains(lesson.id);
+    final todoLessons = _lessons.where((l) => !_completedLessonIds.contains(l.id)).toList();
+    final doneLessons = _lessons.where((l) => _completedLessonIds.contains(l.id)).toList();
+    final filtered = _tab == _LessonTab.todo ? todoLessons : doneLessons;
 
-        return Card(
-          child: ListTile(
-            onTap: () => _onLessonTap(lesson, locked),
-            title: Text(
-              '${index + 1}. ${lesson.title}',
-              style: const TextStyle(fontWeight: FontWeight.w700),
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        Row(
+          children: [
+            _TabPill(
+              label: 'À faire (${todoLessons.length})',
+              selected: _tab == _LessonTab.todo,
+              onTap: () => setState(() => _tab = _LessonTab.todo),
             ),
-            subtitle: Text(
-              [
-                _contentTypeLabels[lesson.contentType] ?? lesson.contentType,
-                if (lesson.category != null) lesson.category!,
-              ].join(' — '),
+            const SizedBox(width: 8),
+            _TabPill(
+              label: 'Terminées (${doneLessons.length})',
+              selected: _tab == _LessonTab.done,
+              onTap: () => setState(() => _tab = _LessonTab.done),
             ),
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: completed
-                    ? AntaColors.green.withValues(alpha: 0.15)
-                    : locked
-                    ? AntaColors.red.withValues(alpha: 0.1)
-                    : AntaColors.slate200.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(999),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (filtered.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Text(
+              _tab == _LessonTab.todo ? 'Tout est fait ici, bravo !' : 'Aucune leçon terminée pour l\'instant.',
+              style: TextStyle(color: AntaColors.slate500),
+            ),
+          )
+        else
+          ...filtered.map((lesson) {
+            final locked = lesson.accessLevel == 'premium' && !widget.isPremiumUser;
+            final completed = _completedLessonIds.contains(lesson.id);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: _LessonCard(
+                lesson: lesson,
+                locked: locked,
+                completed: completed,
+                onTap: () => _onLessonTap(lesson, locked),
               ),
-              child: Text(
-                completed
-                    ? '✓ Terminée'
-                    : locked
-                    ? '🔒 Premium'
-                    : 'À faire',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
+            );
+          }),
+      ],
+    );
+  }
+}
+
+class _TabPill extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TabPill({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? Theme.of(context).colorScheme.primary : AntaColors.slate200.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            color: selected ? Colors.white : AntaColors.slate500,
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+}
+
+class _LessonCard extends StatelessWidget {
+  final LessonItem lesson;
+  final bool locked;
+  final bool completed;
+  final VoidCallback onTap;
+
+  const _LessonCard({
+    required this.lesson,
+    required this.locked,
+    required this.completed,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: AntaColors.red.withValues(alpha: 0.1),
+                  child: Icon(
+                    _contentTypeIcons[lesson.contentType] ?? Icons.quiz_outlined,
+                    color: AntaColors.red,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AntaColors.slate200.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          _contentTypeLabels[lesson.contentType] ?? lesson.contentType,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: AntaColors.slate500,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        lesson.title,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        lesson.description ?? lesson.category ?? 'Une leçon pratique pour progresser en anglais.',
+                        style: TextStyle(color: AntaColors.slate500, fontSize: 13, height: 1.4),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton(
+                onPressed: onTap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: locked ? AntaColors.yellow : null,
+                  foregroundColor: locked ? AntaColors.slate900 : null,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                ),
+                child: Text(locked ? 'Débloquer Premium' : (completed ? 'Revoir' : 'Commencer')),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
