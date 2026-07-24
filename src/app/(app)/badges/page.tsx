@@ -71,7 +71,6 @@ export default async function Page() {
                     ) : (
                       <span className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
                         <Icon icon={icons.lock} className="h-3.5 w-3.5" />
-                        Non débloqué
                       </span>
                     )}
                   </p>
