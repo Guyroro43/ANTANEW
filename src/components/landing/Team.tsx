@@ -8,8 +8,8 @@ const roles = [
   },
   {
     icon: '📚',
-    title: 'Responsable contenu pédagogique',
-    skills: 'Anglais niveau B2+, conception de curricula',
+    title: "Professeurs d'anglais de renom",
+    skills: "Expertise académique confirmée et sens aigu de la psychologie de l'apprenant",
   },
   {
     icon: '🎨',
@@ -32,10 +32,10 @@ export function Team() {
             L&apos;équipe
           </p>
           <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl dark:text-white">
-            Portée par la Junior Entreprise ESCA — INPHB.
+            Conçu par des professeurs de renom, hautement qualifiés.
           </h2>
           <p className="mt-4 text-lg leading-8 text-slate-700 dark:text-slate-300">
-            ANTA est construit par une petite équipe engagée, à taille humaine.
+            Nos enseignants allient expertise académique et finesse psychologique — une capacité rare à anticiper les besoins réels de chaque apprenant, pour un accompagnement qui s&apos;adapte vraiment à toi.
           </p>
         </div>
       </Reveal>

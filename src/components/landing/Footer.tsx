@@ -11,7 +11,7 @@ export function Footer() {
             <p className="text-lg font-black text-slate-900 dark:text-white">ANTA</p>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">African Native Tongue Academy</p>
             <p className="mt-4 text-sm leading-6 text-slate-500 dark:text-slate-400">
-              L&apos;anglais, ancré dans les réalités africaines. Un projet porté par la Junior Entreprise ESCA — INPHB.
+              L&apos;anglais, ancré dans les réalités africaines, enseigné par des professeurs de renom, hautement qualifiés.
             </p>
           </div>
 
@@ -70,7 +70,7 @@ export function Footer() {
         </div>
 
         <div className="mt-10 border-t border-slate-200 pt-6 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
-          © {new Date().getFullYear()} ANTA — Junior Entreprise ESCA, INPHB.
+          © {new Date().getFullYear()} ANTA — African Native Tongue Academy.
         </div>
       </div>
     </footer>
