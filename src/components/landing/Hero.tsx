@@ -3,14 +3,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'motion/react';
-import { useState } from 'react';
-import { ThemeToggle } from '@/components/ThemeToggle';
 
 const highlights = ['10 min/jour', 'Modules culturels', 'Paiement local'];
 
 export function Hero() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   return (
     <section className="mx-auto flex max-w-7xl flex-col gap-10 px-6 py-10 sm:py-16 lg:flex-row lg:items-center lg:px-8 lg:py-24">
       <motion.div
@@ -19,54 +15,6 @@ export function Hero() {
         transition={{ duration: 0.7, ease: 'easeOut' }}
         className="max-w-2xl flex-1"
       >
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsMenuOpen((open) => !open)}
-              aria-label={isMenuOpen ? 'Masquer le menu' : 'Afficher le menu'}
-              aria-expanded={isMenuOpen}
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white/80 text-lg text-slate-800 transition hover:border-red-400 sm:hidden dark:border-slate-600 dark:bg-slate-900/80 dark:text-slate-100"
-            >
-              {isMenuOpen ? '✕' : '☰'}
-            </button>
-            <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border border-red-200 bg-white shadow-sm">
-              <Image src="/logo.jpeg" alt="Logo ANTA" fill className="object-cover object-top" priority />
-            </div>
-            <span className="text-lg font-black tracking-wide text-slate-900 dark:text-white">ANTA</span>
-          </div>
-          <div className="hidden flex-wrap gap-2 sm:flex">
-            <Link href="/connexion" className="rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:border-green-500 hover:text-green-700 dark:border-slate-600 dark:text-slate-200">
-              Connexion
-            </Link>
-            <ThemeToggle />
-          </div>
-        </div>
-
-        {isMenuOpen && (
-          <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white/80 p-3 sm:hidden dark:border-slate-700 dark:bg-slate-900/80">
-            <Link
-              href="/inscription"
-              className="rounded-full bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700"
-            >
-              Inscription
-            </Link>
-            <Link
-              href="/connexion"
-              className="rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:border-green-500 hover:text-green-700 dark:border-slate-600 dark:text-slate-200"
-            >
-              Connexion
-            </Link>
-            <Link
-              href="#modules"
-              onClick={() => setIsMenuOpen(false)}
-              className="rounded-full border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:border-green-500 hover:text-green-700 dark:border-slate-600 dark:text-slate-200"
-            >
-              Modules
-            </Link>
-            <ThemeToggle />
-          </div>
-        )}
         <span className="inline-flex items-center rounded-full border border-red-300 bg-white/80 px-3 py-1 text-sm font-medium text-red-700 shadow-sm dark:border-green-700 dark:bg-slate-900/80 dark:text-green-300">
           Apprends l’anglais avec les réalités d’Afrique
         </span>
