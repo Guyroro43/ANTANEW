@@ -24,7 +24,6 @@ export function SignUpForm() {
     const firstName = String(formData.get('firstName') ?? '').trim();
     const email = String(formData.get('email') ?? '').trim();
     const password = String(formData.get('password') ?? '');
-    const englishLevel = String(formData.get('englishLevel') ?? 'debutant');
     const acceptedTerms = formData.get('terms') === 'on';
 
     if (!firstName || !email || !password) {
@@ -53,7 +52,6 @@ export function SignUpForm() {
         options: {
           data: {
             first_name: firstName,
-            english_level: englishLevel,
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
@@ -111,16 +109,9 @@ export function SignUpForm() {
           <input id="password" name="password" type="password" placeholder="8 caractères minimum" minLength={8} required className={inputClass} />
         </div>
 
-        <div>
-          <label htmlFor="englishLevel" className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Ton niveau en anglais
-          </label>
-          <select id="englishLevel" name="englishLevel" defaultValue="debutant" className={inputClass}>
-            <option value="debutant">Débutant — je commence de zéro</option>
-            <option value="intermediaire">Intermédiaire — je connais les bases</option>
-            <option value="avance">Avancé — je veux perfectionner</option>
-          </select>
-        </div>
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+          🎯 Juste après ton inscription, un petit quiz chronométré déterminera automatiquement ton niveau d&apos;anglais.
+        </p>
 
         <label className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400">
           <input name="terms" type="checkbox" required className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-red-600" />

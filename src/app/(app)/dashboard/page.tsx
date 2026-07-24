@@ -193,9 +193,9 @@ export default async function Page() {
                 <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600 dark:bg-green-950 dark:text-green-400">
                   <Icon icon={stat.icon} className="h-5 w-5" />
                 </div>
-                <div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{stat.label}</p>
-                  <p className="mt-0.5 text-2xl font-black tabular-nums">{stat.value}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-slate-500 dark:text-slate-400">{stat.label}</p>
+                  <p className="mt-0.5 truncate text-2xl font-black tabular-nums">{stat.value}</p>
                 </div>
               </div>
             </Reveal>

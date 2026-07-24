@@ -56,9 +56,9 @@ export default async function Page() {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">{badge.icon}</span>
-                    <div>
-                      <p className="font-semibold">{badge.name}</p>
+                    <span className="flex-shrink-0 text-3xl">{badge.icon}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold">{badge.name}</p>
                       <p className="text-sm text-slate-600 dark:text-slate-300">{badge.description}</p>
                     </div>
                   </div>

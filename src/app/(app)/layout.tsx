@@ -15,10 +15,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect('/connexion');
   }
 
-  const { data: profile } = await supabase.from('profiles').select('role, first_name').eq('id', user.id).single();
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, first_name, placement_test_completed')
+    .eq('id', user.id)
+    .single();
 
   if (profile && isAdminRole(profile.role)) {
     redirect(getHomePathForRole(profile.role));
+  }
+
+  if (profile && !profile.placement_test_completed) {
+    redirect('/evaluation');
   }
 
   return (

@@ -140,7 +140,7 @@ export default function Page() {
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <Card>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">Rôle</h2>
-          <div className="mt-3 flex items-center gap-3">
+          <div className="mt-3 flex flex-wrap items-center gap-3">
             <Badge variant={user.role === 'developer' ? 'destructive' : user.role === 'user' ? 'default' : 'success'}>
               {roleOptions.find((r) => r.value === user.role)?.label ?? user.role}
             </Badge>
@@ -149,7 +149,7 @@ export default function Page() {
               value={user.role}
               onValueChange={(value) => setPendingRole(value as UserRole)}
             >
-              <SelectTrigger className="w-56">
+              <SelectTrigger className="w-full sm:w-56">
                 <SelectValue placeholder="Changer le rôle" />
               </SelectTrigger>
               <SelectContent>

@@ -60,19 +60,19 @@ export default async function Page() {
                         : 'border-slate-200 bg-gradient-to-br from-white via-yellow-50 to-green-50 dark:border-slate-700 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950'
                     }`}
                   >
-                    <span className="flex items-center gap-3 font-semibold">
+                    <span className="flex min-w-0 flex-1 items-center gap-3 font-semibold">
                       <span
-                        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-black tabular-nums ${
+                        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-black tabular-nums ${
                           medalClass ?? 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                         }`}
                       >
                         {medalClass ? <Icon icon={icons.trophy} className="h-4 w-4" /> : entry.rank}
                       </span>
                       <UserAvatar name={entry.first_name} src={entry.avatar_url} size={36} />
-                      {entry.first_name}
-                      {isMe && <span className="text-xs font-normal text-red-600 dark:text-yellow-400">(toi)</span>}
+                      <span className="truncate">{entry.first_name}</span>
+                      {isMe && <span className="flex-shrink-0 text-xs font-normal text-red-600 dark:text-yellow-400">(toi)</span>}
                     </span>
-                    <span className="text-sm font-semibold tabular-nums text-slate-600 dark:text-slate-300">{entry.total_xp} XP</span>
+                    <span className="flex-shrink-0 text-sm font-semibold tabular-nums text-slate-600 dark:text-slate-300">{entry.total_xp} XP</span>
                   </div>
                 </Reveal>
               );

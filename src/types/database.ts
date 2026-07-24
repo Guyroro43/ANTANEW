@@ -18,6 +18,8 @@ export interface Database {
           subscription_expires_at: string | null;
           email: string | null;
           notifications_enabled: boolean;
+          placement_topic: string | null;
+          placement_test_completed: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -34,6 +36,8 @@ export interface Database {
           subscription_plan?: 'starter' | 'premium';
           subscription_expires_at?: string | null;
           notifications_enabled?: boolean;
+          placement_topic?: string | null;
+          placement_test_completed?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -302,6 +306,28 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['role_changes']['Insert']>;
         Relationships: [];
       };
+      placement_questions: {
+        Row: {
+          id: string;
+          topic: string;
+          order_index: number;
+          question_text: string;
+          options: Json;
+          correct_index: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          topic: string;
+          order_index?: number;
+          question_text: string;
+          options: Json;
+          correct_index: number;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['placement_questions']['Insert']>;
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -334,6 +360,24 @@ export interface Database {
           current_streak: number;
           new_badges: { slug: string; name: string; icon: string }[];
         };
+      };
+      get_placement_test: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          question_id: string;
+          topic: string;
+          order_index: number;
+          question_text: string;
+          options: Json;
+        }[];
+      };
+      submit_placement_test: {
+        Args: { p_answers: Json };
+        Returns: {
+          level: 'debutant' | 'intermediaire' | 'avance';
+          correct_count: number;
+          total: number;
+        }[];
       };
     };
   };
