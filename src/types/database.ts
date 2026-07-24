@@ -335,10 +335,6 @@ export interface Database {
           new_badges: { slug: string; name: string; icon: string }[];
         };
       };
-      admin_update_profile: {
-        Args: { p_user_id: string; p_role?: string | null; p_subscription_plan?: string | null };
-        Returns: void;
-      };
     };
   };
 }
