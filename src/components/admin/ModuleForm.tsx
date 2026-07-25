@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { FieldInput } from '@/components/ui/field-input';
 import { Toggle } from '@/components/ui/Toggle';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,29 @@ export function ModuleForm({ initialValue, onSubmit, onCancel }: ModuleFormProps
     is_published: initialValue?.is_published ?? false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const path = `modules/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage.from('lesson-media').upload(path, file);
+      if (uploadError) throw new Error(uploadError.message);
+
+      const { data } = supabase.storage.from('lesson-media').getPublicUrl(path);
+      setValues((prev) => ({ ...prev, image_url: data.publicUrl }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Échec de l'upload de l'image.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -73,11 +96,34 @@ export function ModuleForm({ initialValue, onSubmit, onCancel }: ModuleFormProps
         value={values.description}
         onChange={(e) => setValues({ ...values, description: e.target.value })}
       />
-      <FieldInput
-        label="URL de l'image"
-        value={values.image_url}
-        onChange={(e) => setValues({ ...values, image_url: e.target.value })}
-      />
+      <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+        <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+          Image de couverture
+        </label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          disabled={isUploading}
+          className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-red-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-red-700 dark:text-slate-300"
+        />
+        {isUploading && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Envoi en cours…</p>}
+        {values.image_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={values.image_url}
+            alt="Aperçu de l'image du module"
+            className="mt-3 h-32 w-full rounded-lg object-cover"
+          />
+        )}
+        <FieldInput
+          label="Ou colle une URL externe"
+          className="mt-3"
+          value={values.image_url}
+          onChange={(e) => setValues({ ...values, image_url: e.target.value })}
+          placeholder="https://…"
+        />
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <FieldInput
           label="XP à la clé"
@@ -111,7 +157,7 @@ export function ModuleForm({ initialValue, onSubmit, onCancel }: ModuleFormProps
         <Button type="button" variant="ghost" onClick={onCancel}>
           Annuler
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting || isUploading}>
           {isSubmitting ? 'Enregistrement…' : 'Enregistrer'}
         </Button>
       </div>

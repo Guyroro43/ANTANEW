@@ -27,9 +27,6 @@ export default function InscriptionPage() {
           <h2 className="mt-1 text-xl font-black text-white">
             Rejoins l&apos;espace <span className="italic text-amber-400">apprenant.</span>
           </h2>
-          <p className="mt-1 text-sm text-slate-400">
-            Crée ton compte en 60 secondes. Aucune carte bancaire requise.
-          </p>
         </div>
 
         <div className="rounded-2xl border border-amber-200 bg-white/80 p-8 shadow-xl shadow-amber-100 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 dark:shadow-none">

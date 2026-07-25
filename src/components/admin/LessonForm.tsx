@@ -16,7 +16,7 @@ interface LessonFormProps {
 const difficulties = ['debutant', 'intermediaire', 'avance'] as const;
 
 const contentTypes = [
-  { value: 'qcm', label: 'QCM (questions)' },
+  { value: 'qcm', label: 'Interactif (généré depuis un PDF)' },
   { value: 'video', label: 'Vidéo' },
   { value: 'audio', label: 'Audio' },
 ] as const;
