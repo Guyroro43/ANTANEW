@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   X,
+  MessageCircle,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -23,6 +24,7 @@ import { cn } from '@/lib/utils';
 const links = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/modules', label: 'Modules', icon: BookOpen },
+  { href: '/pratique', label: 'Pratique', icon: MessageCircle },
   { href: '/classement', label: 'Classement', icon: Trophy },
   { href: '/badges', label: 'Badges', icon: Award },
   { href: '/abonnement', label: 'Abonnement', icon: CreditCard },
