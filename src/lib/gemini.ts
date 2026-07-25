@@ -25,6 +25,17 @@ export interface GeneratedQuestion {
   explanation: string;
 }
 
+export interface GeneratedVocabulary {
+  word: string;
+  definition: string;
+  example: string;
+}
+
+export interface GeneratedLessonContent {
+  vocabulary: GeneratedVocabulary[];
+  questions: GeneratedQuestion[];
+}
+
 const quizQuestionSchema = {
   type: Type.OBJECT,
   properties: {
@@ -36,36 +47,49 @@ const quizQuestionSchema = {
   required: ['question_text', 'options', 'correct_index', 'explanation'],
 };
 
-const quizQuestionsSchema = {
+const vocabularyItemSchema = {
   type: Type.OBJECT,
   properties: {
-    questions: { type: Type.ARRAY, items: quizQuestionSchema },
+    word: { type: Type.STRING },
+    definition: { type: Type.STRING },
+    example: { type: Type.STRING },
   },
-  required: ['questions'],
+  required: ['word', 'definition', 'example'],
 };
 
-interface GenerateQuizQuestionsParams {
+const lessonContentSchema = {
+  type: Type.OBJECT,
+  properties: {
+    vocabulary: { type: Type.ARRAY, items: vocabularyItemSchema },
+    questions: { type: Type.ARRAY, items: quizQuestionSchema },
+  },
+  required: ['vocabulary', 'questions'],
+};
+
+interface GenerateLessonContentParams {
   moduleTitle: string;
   lessonTitle: string;
   lessonDescription: string | null;
   category: string | null;
   difficulty: string | null;
   count: number;
+  vocabCount: number;
 }
 
-export async function generateQuizQuestions({
+export async function generateLessonContent({
   moduleTitle,
   lessonTitle,
   lessonDescription,
   category,
   difficulty,
   count,
-}: GenerateQuizQuestionsParams): Promise<GeneratedQuestion[]> {
+  vocabCount,
+}: GenerateLessonContentParams): Promise<GeneratedLessonContent> {
   const response = await getClient().models.generateContent({
     model: MODEL,
-    contents: `Tu es concepteur pédagogique pour ANTA, une plateforme d'apprentissage de l'anglais pour de jeunes Africains (Côte d'Ivoire).
+    contents: `Tu es concepteur pédagogique pour ANTA, une plateforme d'apprentissage de l'anglais pour de jeunes Africains (Côte d'Ivoire). Tu construis une mini-leçon interactive complète (vocabulaire puis quiz), pas juste une évaluation sèche.
 
-Génère exactement ${count} questions à choix multiple (QCM) en français pour évaluer la leçon suivante :
+Sujet de la leçon :
 
 Module : ${moduleTitle}
 Leçon : ${lessonTitle}
@@ -73,35 +97,39 @@ ${lessonDescription ? `Description : ${lessonDescription}` : ''}
 ${category ? `Catégorie : ${category}` : ''}
 Niveau : ${difficulty ?? 'debutant'}
 
+Génère exactement ${vocabCount} mots de vocabulaire et exactement ${count} questions.
+
 Consignes :
-- Chaque question porte sur le vocabulaire ou les expressions anglaises utiles dans des situations de la vie quotidienne africaine (pas de références à New York, Londres ou Tokyo).
-- Chaque question a exactement 4 options, une seule correcte.
+- D'abord le vocabulaire : ${vocabCount} mots ou expressions anglaises clés pour ce sujet, utiles dans des situations de la vie quotidienne africaine (pas de références à New York, Londres ou Tokyo), avec leur définition en français et une phrase d'exemple en anglais.
+- Puis les questions : elles réutilisent ce vocabulaire pour vérifier la compréhension, avec exactement 4 options chacune, une seule correcte.
 - "correct_index" est l'index (0 à 3) de la bonne option dans le tableau "options".
 - "explanation" justifie brièvement la bonne réponse, en français, de façon pédagogique.`,
     config: {
       responseMimeType: 'application/json',
-      responseSchema: quizQuestionsSchema,
+      responseSchema: lessonContentSchema,
     },
   });
 
-  return readJsonResponse<{ questions: GeneratedQuestion[] }>(response.text).questions;
+  return readJsonResponse<GeneratedLessonContent>(response.text);
 }
 
-interface GenerateQuizQuestionsFromPdfParams {
+interface GenerateLessonContentFromPdfParams {
   pdfUrl: string;
   lessonTitle: string;
   category: string | null;
   difficulty: string | null;
   count: number;
+  vocabCount: number;
 }
 
-export async function generateQuizQuestionsFromPdf({
+export async function generateLessonContentFromPdf({
   pdfUrl,
   lessonTitle,
   category,
   difficulty,
   count,
-}: GenerateQuizQuestionsFromPdfParams): Promise<GeneratedQuestion[]> {
+  vocabCount,
+}: GenerateLessonContentFromPdfParams): Promise<GeneratedLessonContent> {
   const pdfResponse = await fetch(pdfUrl);
   if (!pdfResponse.ok) {
     throw new Error('Impossible de télécharger le PDF source.');
@@ -116,7 +144,7 @@ export async function generateQuizQuestionsFromPdf({
         parts: [
           { inlineData: { mimeType: 'application/pdf', data: pdfBuffer.toString('base64') } },
           {
-            text: `Tu es concepteur pédagogique pour ANTA, une plateforme d'apprentissage de l'anglais pour de jeunes Africains (Côte d'Ivoire).
+            text: `Tu es concepteur pédagogique pour ANTA, une plateforme d'apprentissage de l'anglais pour de jeunes Africains (Côte d'Ivoire). Tu construis une mini-leçon interactive complète (vocabulaire puis quiz) à partir de ce document, pas juste une évaluation sèche.
 
 Analyse le contenu de ce document PDF, qui sert de support à la leçon suivante :
 
@@ -124,11 +152,11 @@ Leçon : ${lessonTitle}
 ${category ? `Catégorie : ${category}` : ''}
 Niveau : ${difficulty ?? 'debutant'}
 
-Génère exactement ${count} questions à choix multiple (QCM) en français pour évaluer la compréhension de ce document.
+Génère exactement ${vocabCount} mots de vocabulaire et exactement ${count} questions, basés uniquement sur le contenu réel du document (pas sur des connaissances générales).
 
 Consignes :
-- Base-toi uniquement sur le contenu réel du document, pas sur des connaissances générales.
-- Chaque question a exactement 4 options, une seule correcte.
+- D'abord le vocabulaire : ${vocabCount} mots ou expressions anglaises clés tirés du document, avec leur définition en français et une phrase d'exemple en anglais.
+- Puis les questions : elles réutilisent ce vocabulaire pour vérifier la compréhension du document, avec exactement 4 options chacune, une seule correcte.
 - "correct_index" est l'index (0 à 3) de la bonne option dans le tableau "options".
 - "explanation" justifie brièvement la bonne réponse, en français, de façon pédagogique.`,
           },
@@ -137,11 +165,11 @@ Consignes :
     ],
     config: {
       responseMimeType: 'application/json',
-      responseSchema: quizQuestionsSchema,
+      responseSchema: lessonContentSchema,
     },
   });
 
-  return readJsonResponse<{ questions: GeneratedQuestion[] }>(response.text).questions;
+  return readJsonResponse<GeneratedLessonContent>(response.text);
 }
 
 export interface WrongAnswerItem {
@@ -209,4 +237,81 @@ Réponds avec un "message" par question, en réutilisant exactement le "question
   });
 
   return readJsonResponse<{ feedback: WrongAnswerFeedback[] }>(response.text).feedback;
+}
+
+export interface DraftedModuleFields {
+  title: string;
+  slug: string;
+  description: string;
+}
+
+interface DraftModuleFieldsParams {
+  brief: string;
+}
+
+export async function draftModuleFields({ brief }: DraftModuleFieldsParams): Promise<DraftedModuleFields> {
+  const response = await getClient().models.generateContent({
+    model: MODEL,
+    contents: `Tu es concepteur pédagogique pour ANTA, une plateforme d'apprentissage de l'anglais pour de jeunes Africains (Côte d'Ivoire).
+
+Un instructeur veut créer un module avec cette consigne courte : « ${brief} »
+
+Rédige :
+- "title" : un titre de module accrocheur et clair, en français, 3 à 6 mots.
+- "slug" : version url-friendly du titre (minuscules, tirets, sans accents, ex. "saluer-se-presenter").
+- "description" : une phrase engageante en français qui donne envie de suivre ce module (1 à 2 phrases).`,
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          title: { type: Type.STRING },
+          slug: { type: Type.STRING },
+          description: { type: Type.STRING },
+        },
+        required: ['title', 'slug', 'description'],
+      },
+    },
+  });
+
+  return readJsonResponse<DraftedModuleFields>(response.text);
+}
+
+export interface DraftedLessonFields {
+  title: string;
+  description: string;
+  category: string;
+}
+
+interface DraftLessonFieldsParams {
+  brief: string;
+  moduleTitle: string;
+}
+
+export async function draftLessonFields({ brief, moduleTitle }: DraftLessonFieldsParams): Promise<DraftedLessonFields> {
+  const response = await getClient().models.generateContent({
+    model: MODEL,
+    contents: `Tu es concepteur pédagogique pour ANTA, une plateforme d'apprentissage de l'anglais pour de jeunes Africains (Côte d'Ivoire).
+
+Un instructeur veut créer une leçon dans le module « ${moduleTitle} », avec cette consigne courte : « ${brief} »
+
+Rédige :
+- "title" : un titre de leçon clair, en français, 3 à 6 mots.
+- "description" : une phrase en français qui résume ce que l'apprenant va apprendre.
+- "category" : une catégorie courte (1 à 2 mots, ex. "Vocabulaire", "Grammaire", "Expressions").`,
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          title: { type: Type.STRING },
+          description: { type: Type.STRING },
+          category: { type: Type.STRING },
+        },
+        required: ['title', 'description', 'category'],
+      },
+    },
+  });
+
+  return readJsonResponse<DraftedLessonFields>(response.text);
 }
