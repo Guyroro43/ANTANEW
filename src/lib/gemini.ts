@@ -66,6 +66,10 @@ const lessonContentSchema = {
   required: ['vocabulary', 'questions'],
 };
 
+const QUESTION_VARIETY_CONSIGNES = `- Les questions ne doivent PAS être un simple rappel du mot de vocabulaire tel qu'il vient d'être présenté (ex. répéter la même définition) — c'est trop facile si le mot vient d'être vu. Varie l'angle : utilise le mot dans une phrase ou un contexte nouveau, teste une nuance de sens, une collocation, ou une erreur fréquente chez un francophone.
+- Certaines questions peuvent dépasser légèrement le vocabulaire présenté (grammaire liée, usage courant) pour éviter un simple test de reconnaissance.
+- Les 3 mauvaises options doivent être plausibles, pas absurdes : mélange un piège de sens proche, un piège de forme proche (orthographe ou sonorité similaire, ex. faux-ami), et une option liée au thème mais incorrecte. Évite les options qui se devinent trivialement par élimination.`;
+
 interface GenerateLessonContentParams {
   moduleTitle: string;
   lessonTitle: string;
@@ -101,7 +105,8 @@ Génère exactement ${vocabCount} mots de vocabulaire et exactement ${count} que
 
 Consignes :
 - D'abord le vocabulaire : ${vocabCount} mots ou expressions anglaises clés pour ce sujet, utiles dans des situations de la vie quotidienne africaine (pas de références à New York, Londres ou Tokyo), avec leur définition en français et une phrase d'exemple en anglais.
-- Puis les questions : elles réutilisent ce vocabulaire pour vérifier la compréhension, avec exactement 4 options chacune, une seule correcte.
+- Puis les questions, avec exactement 4 options chacune, une seule correcte.
+${QUESTION_VARIETY_CONSIGNES}
 - "correct_index" est l'index (0 à 3) de la bonne option dans le tableau "options".
 - "explanation" justifie brièvement la bonne réponse, en français, de façon pédagogique.`,
     config: {
@@ -156,7 +161,8 @@ Génère exactement ${vocabCount} mots de vocabulaire et exactement ${count} que
 
 Consignes :
 - D'abord le vocabulaire : ${vocabCount} mots ou expressions anglaises clés tirés du document, avec leur définition en français et une phrase d'exemple en anglais.
-- Puis les questions : elles réutilisent ce vocabulaire pour vérifier la compréhension du document, avec exactement 4 options chacune, une seule correcte.
+- Puis les questions, basées sur le contenu du document, avec exactement 4 options chacune, une seule correcte.
+${QUESTION_VARIETY_CONSIGNES}
 - "correct_index" est l'index (0 à 3) de la bonne option dans le tableau "options".
 - "explanation" justifie brièvement la bonne réponse, en français, de façon pédagogique.`,
           },
