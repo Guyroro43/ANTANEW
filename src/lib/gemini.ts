@@ -9,7 +9,7 @@ function getClient() {
   return client;
 }
 
-const MODEL = 'gemini-2.5-flash';
+const MODEL = 'gemini-flash-latest';
 
 function readJsonResponse<T>(text: string | undefined): T {
   if (!text) {
