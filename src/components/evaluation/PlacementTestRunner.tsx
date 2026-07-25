@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { Json } from '@/types/database';
 
-const QUESTION_SECONDS = 60;
+const QUESTION_SECONDS = 20;
+const SUBMIT_TIMEOUT_MS = 15000;
 
 interface Question {
   id: string;
@@ -43,7 +44,7 @@ const levelCopy: Record<Result['level'], { label: string; emoji: string }> = {
 export function PlacementTestRunner({ firstName, topic, questions }: PlacementTestRunnerProps) {
   const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
-  const [step, setStep] = useState<'intro' | 'quiz' | 'submitting' | 'result'>('intro');
+  const [step, setStep] = useState<'intro' | 'quiz' | 'submitting' | 'error' | 'result'>('intro');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(QUESTION_SECONDS);
@@ -86,16 +87,20 @@ export function PlacementTestRunner({ firstName, topic, questions }: PlacementTe
     setError(null);
     try {
       const supabase = createClient();
-      const { data, error: rpcError } = await supabase.rpc('submit_placement_test', {
-        p_answers: answersRef.current as unknown as Json,
+      const timeout = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('La connexion est trop lente. Réessaie.')), SUBMIT_TIMEOUT_MS);
       });
+      const { data, error: rpcError } = await Promise.race([
+        supabase.rpc('submit_placement_test', { p_answers: answersRef.current as unknown as Json }),
+        timeout,
+      ]);
       if (rpcError) throw new Error(rpcError.message);
       const row = Array.isArray(data) ? data[0] : data;
       setResult(row as Result);
       setStep('result');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
-      setStep('quiz');
+      setStep('error');
     }
   };
 
@@ -125,7 +130,7 @@ export function PlacementTestRunner({ firstName, topic, questions }: PlacementTe
               </span>
               <h1 className="text-2xl font-black">Salut {firstName}, à toi de jouer !</h1>
               <p className="max-w-sm text-slate-600 dark:text-slate-300">
-                Un petit quiz de 6 questions sur le thème <span className="font-bold text-red-600 dark:text-yellow-400">« {topic} »</span> pour découvrir ton niveau d&apos;anglais. Tu as <span className="font-bold">60 secondes</span> par question — fais confiance à tes réflexes !
+                Un petit quiz de 6 questions sur le thème <span className="font-bold text-red-600 dark:text-yellow-400">« {topic} »</span> pour découvrir ton niveau d&apos;anglais. Tu as <span className="font-bold">20 secondes</span> par question — fais confiance à tes réflexes !
               </p>
               <Button onClick={() => setStep('quiz')} className="mt-2 w-full">
                 C&apos;est parti
@@ -203,6 +208,23 @@ export function PlacementTestRunner({ firstName, topic, questions }: PlacementTe
             </motion.div>
           )}
 
+          {step === 'error' && (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center gap-3 py-6 text-center"
+            >
+              <p className="font-semibold text-slate-600 dark:text-slate-300">
+                Impossible de calculer ton niveau pour l&apos;instant.
+              </p>
+              <Button onClick={submit} className="mt-2 w-full">
+                Réessayer
+              </Button>
+            </motion.div>
+          )}
+
           {step === 'result' && result && (
             <motion.div
               key="result"
@@ -230,7 +252,7 @@ export function PlacementTestRunner({ firstName, topic, questions }: PlacementTe
           )}
         </AnimatePresence>
 
-        {error && (
+        {step === 'error' && error && (
           <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
             {error}
           </p>

@@ -314,6 +314,7 @@ export interface Database {
           question_text: string;
           options: Json;
           correct_index: number;
+          difficulty: number;
           created_at: string;
         };
         Insert: {
@@ -323,6 +324,7 @@ export interface Database {
           question_text: string;
           options: Json;
           correct_index: number;
+          difficulty?: number;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['placement_questions']['Insert']>;

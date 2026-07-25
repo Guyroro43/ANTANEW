@@ -25,7 +25,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect(getHomePathForRole(profile.role));
   }
 
-  if (profile && !profile.placement_test_completed) {
+  if (!profile?.placement_test_completed) {
     redirect('/evaluation');
   }
 
