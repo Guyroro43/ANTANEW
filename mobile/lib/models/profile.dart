@@ -8,6 +8,7 @@ class Profile {
   final String subscriptionPlan;
   final String? subscriptionExpiresAt;
   final String createdAt;
+  final String? progressSummary;
 
   Profile({
     required this.id,
@@ -19,6 +20,7 @@ class Profile {
     required this.subscriptionPlan,
     required this.subscriptionExpiresAt,
     required this.createdAt,
+    this.progressSummary,
   });
 
   factory Profile.fromMap(Map<String, dynamic> map) {
@@ -32,6 +34,7 @@ class Profile {
       subscriptionPlan: (map['subscription_plan'] as String?) ?? 'starter',
       subscriptionExpiresAt: map['subscription_expires_at'] as String?,
       createdAt: (map['created_at'] as String?) ?? '',
+      progressSummary: map['progress_summary'] as String?,
     );
   }
 

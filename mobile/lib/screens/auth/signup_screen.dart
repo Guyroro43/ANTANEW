@@ -13,7 +13,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _firstNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  String _englishLevel = 'debutant';
   bool _acceptedTerms = false;
   bool _isLoading = false;
   bool _success = false;
@@ -46,10 +45,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       await Supabase.instance.client.auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        data: {
-          'first_name': _firstNameController.text.trim(),
-          'english_level': _englishLevel,
-        },
+        data: {'first_name': _firstNameController.text.trim()},
       );
       setState(() => _success = true);
     } on AuthException catch (e) {
@@ -136,27 +132,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 : null,
           ),
           const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            initialValue: _englishLevel,
-            decoration: const InputDecoration(
-              labelText: "Ton niveau en anglais",
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(12),
             ),
-            items: const [
-              DropdownMenuItem(
-                value: 'debutant',
-                child: Text('Débutant — je commence de zéro'),
-              ),
-              DropdownMenuItem(
-                value: 'intermediaire',
-                child: Text('Intermédiaire — je connais les bases'),
-              ),
-              DropdownMenuItem(
-                value: 'avance',
-                child: Text('Avancé — je veux perfectionner'),
-              ),
-            ],
-            onChanged: (value) =>
-                setState(() => _englishLevel = value ?? 'debutant'),
+            child: const Text(
+              "🎯 Juste après ton inscription, un petit quiz chronométré déterminera automatiquement ton niveau d'anglais.",
+              style: TextStyle(fontSize: 13),
+            ),
           ),
           const SizedBox(height: 8),
           CheckboxListTile(
