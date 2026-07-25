@@ -355,3 +355,46 @@ Base-toi uniquement sur ces chiffres réels, n'invente aucune donnée.`,
 
   return response.text?.trim() ?? '';
 }
+
+export interface ChatTurn {
+  role: 'user' | 'model';
+  text: string;
+}
+
+interface ChatWithPracticePartnerParams {
+  level: string;
+  firstName: string;
+  history: ChatTurn[];
+  message: string;
+}
+
+export async function chatWithPracticePartner({
+  level,
+  firstName,
+  history,
+  message,
+}: ChatWithPracticePartnerParams): Promise<string> {
+  const systemInstruction = `Tu es "Kora", le partenaire de conversation en anglais d'ANTA, une plateforme d'apprentissage pour de jeunes Africains. Tu discutes en anglais avec ${firstName}, dont le niveau est "${level}", pour qu'il/elle pratique à l'écrit dans un cadre bienveillant et motivant.
+
+Règles :
+- Réponds principalement en anglais, adapté au niveau ${level} (phrases courtes et vocabulaire simple si débutant, plus riche si avancé).
+- Si l'apprenant fait une faute d'anglais notable, corrige-la brièvement et gentiment (une ligne, en français, précédée de "💡"), puis continue la conversation normalement.
+- Pose des questions de relance pour maintenir la conversation active.
+- Ancre les sujets dans le quotidien africain quand c'est pertinent (marché, transport, famille, foot...), jamais New York/Londres/Tokyo.
+- Ceci est un espace d'entraînement libre, pas une évaluation : ne donne jamais de note ni de score.`;
+
+  const contents = [
+    ...history.map((turn) => ({ role: turn.role, parts: [{ text: turn.text }] })),
+    { role: 'user' as const, parts: [{ text: message }] },
+  ];
+
+  const response = await getClient().models.generateContent({
+    model: MODEL,
+    contents,
+    config: {
+      systemInstruction,
+    },
+  });
+
+  return response.text?.trim() ?? '';
+}

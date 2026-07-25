@@ -5,6 +5,9 @@ import { Reveal } from '@/components/ui/Reveal';
 import { Icon, icons } from '@/components/ui/Icon';
 import { WelcomeBackModal } from '@/components/dashboard/WelcomeBackModal';
 import { getHomePathForRole, isAdminRole } from '@/lib/roleRouting';
+import { getOrGenerateProgressSummary, getCategoryStats, MIN_COMPLETED_LESSONS } from '@/lib/progressSummary';
+
+const WEAK_CATEGORY_THRESHOLD = 3.5;
 
 const shortcuts = [
   { href: '/modules', label: 'Modules', icon: icons.module },
@@ -51,11 +54,13 @@ export default async function Page() {
     moduleIds.length
       ? supabase
           .from('lessons')
-          .select('id, module_id, title, order_index, access_level')
+          .select('id, module_id, title, order_index, access_level, category')
           .eq('is_published', true)
           .in('module_id', moduleIds)
           .order('order_index', { ascending: true })
-      : Promise.resolve({ data: [] as { id: string; module_id: string; title: string; order_index: number; access_level: string }[] }),
+      : Promise.resolve({
+          data: [] as { id: string; module_id: string; title: string; order_index: number; access_level: string; category: string | null }[],
+        }),
     supabase.from('progress').select('lesson_id, completed, completed_at').eq('user_id', user.id),
   ]);
 
@@ -85,13 +90,32 @@ export default async function Page() {
   });
 
   const modulesById = new Map((modules ?? []).map((m) => [m.id, m]));
-  const nextLessonRow = (lessons ?? []).find((lesson) => {
+  const availableLessons = (lessons ?? []).filter((lesson) => {
     if (completedLessonIds.has(lesson.id)) return false;
     const parentModule = modulesById.get(lesson.module_id);
     const moduleLocked = parentModule?.is_premium && !isPremiumUser;
     const lessonLocked = lesson.access_level === 'premium' && !isPremiumUser;
     return !moduleLocked && !lessonLocked;
   });
+
+  const defaultNextLesson = availableLessons[0];
+  let nextLessonRow = defaultNextLesson;
+  let isAdaptiveRecommendation = false;
+
+  const { completedCount, categoryStats } = await getCategoryStats(supabase, user.id);
+  if (completedCount >= MIN_COMPLETED_LESSONS) {
+    const weakestCategory = categoryStats
+      .filter((c) => c.avgScore < WEAK_CATEGORY_THRESHOLD)
+      .sort((a, b) => a.avgScore - b.avgScore)[0];
+
+    if (weakestCategory) {
+      const reinforcementLesson = availableLessons.find((lesson) => lesson.category === weakestCategory.category);
+      if (reinforcementLesson && reinforcementLesson.id !== defaultNextLesson?.id) {
+        nextLessonRow = reinforcementLesson;
+        isAdaptiveRecommendation = true;
+      }
+    }
+  }
 
   const firstName = profile?.first_name ?? 'Apprenant';
   const level = profile?.level ?? 'Lionceau';
@@ -106,6 +130,13 @@ export default async function Page() {
     { label: 'Streak', value: `${currentStreak} jour${currentStreak > 1 ? 's' : ''}`, icon: icons.flame },
     { label: 'Niveau', value: level, icon: icons.shield },
   ];
+
+  const progressSummary = await getOrGenerateProgressSummary(supabase, {
+    userId: user.id,
+    firstName,
+    level,
+    currentStreak,
+  });
 
   return (
     <main className="min-h-screen bg-[linear-gradient(135deg,_#fffdf5_0%,_#fef3c7_35%,_#ecfccb_100%)] px-6 py-16 text-slate-900 dark:bg-[linear-gradient(135deg,_#020617_0%,_#111827_45%,_#052e16_100%)] dark:text-slate-100">
@@ -145,14 +176,31 @@ export default async function Page() {
                 Niveau <span className="font-semibold">{level}</span> — {totalXp} XP — Streak de {currentStreak} jour{currentStreak > 1 ? 's' : ''}.
               </p>
             </div>
-            <Link
-              href={nextLessonRow ? `/lecon/${nextLessonRow.id}` : '/modules'}
-              className="flex-shrink-0 rounded-full bg-white px-6 py-3 font-bold text-red-600 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:text-green-700"
-            >
-              Continuer une leçon
-            </Link>
+            <div className="flex flex-col items-end gap-1.5">
+              {isAdaptiveRecommendation && (
+                <span className="flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white">
+                  <Icon icon={icons.sparkles} className="h-3 w-3" />
+                  Recommandé pour toi
+                </span>
+              )}
+              <Link
+                href={nextLessonRow ? `/lecon/${nextLessonRow.id}` : '/modules'}
+                className="flex-shrink-0 rounded-full bg-white px-6 py-3 font-bold text-red-600 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:text-green-700"
+              >
+                Continuer une leçon
+              </Link>
+            </div>
           </div>
         </Reveal>
+
+        {progressSummary && (
+          <Reveal delay={0.08}>
+            <div className="mt-6 flex items-start gap-3 rounded-[1.25rem] border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-950/30">
+              <Icon icon={icons.sparkles} className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{progressSummary}</p>
+            </div>
+          </Reveal>
+        )}
 
         <Reveal delay={0.1}>
           <p className="mt-10 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">

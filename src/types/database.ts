@@ -20,6 +20,8 @@ export interface Database {
           notifications_enabled: boolean;
           placement_topic: string | null;
           placement_test_completed: boolean;
+          progress_summary: string | null;
+          progress_summary_generated_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -38,6 +40,8 @@ export interface Database {
           notifications_enabled?: boolean;
           placement_topic?: string | null;
           placement_test_completed?: boolean;
+          progress_summary?: string | null;
+          progress_summary_generated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
