@@ -31,12 +31,12 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
         aria-modal="true"
         onClick={(event) => event.stopPropagation()}
         className={cn(
-          'w-full max-w-lg rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900',
+          'flex max-h-[90vh] w-full max-w-lg flex-col rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900',
           className,
         )}
       >
-        {title ? <h2 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h2> : null}
-        <div className="mt-4">{children}</div>
+        {title ? <h2 className="flex-shrink-0 text-lg font-bold text-slate-900 dark:text-white">{title}</h2> : null}
+        <div className="mt-4 overflow-y-auto">{children}</div>
       </div>
     </div>,
     document.body,
