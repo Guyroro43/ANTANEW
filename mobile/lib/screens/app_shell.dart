@@ -4,6 +4,7 @@ import 'modules_screen.dart';
 import 'classement_screen.dart';
 import 'badges_screen.dart';
 import 'profil_screen.dart';
+import 'pratique_screen.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -26,6 +27,7 @@ class AppShellState extends State<AppShell> {
     ClassementScreen(),
     BadgesScreen(),
     ProfilScreen(),
+    PratiqueScreen(),
   ];
 
   static const _titles = [
@@ -34,6 +36,7 @@ class AppShellState extends State<AppShell> {
     'Classement',
     'Badges',
     'Profil',
+    'Pratique',
   ];
 
   void goToTab(int index) => setState(() => _currentIndex = index);
@@ -71,6 +74,11 @@ class AppShellState extends State<AppShell> {
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: 'Profil',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble),
+            label: 'Pratique',
           ),
         ],
       ),
