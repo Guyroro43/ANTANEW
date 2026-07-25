@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import '../config/api_config.dart';
 import '../config/app_theme.dart';
 import '../models/profile.dart';
 import '../models/lesson_item.dart';
@@ -10,6 +13,8 @@ import 'app_shell.dart';
 import 'lecon_screen.dart';
 
 const _weekdayLabels = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+const _minCompletedLessonsForInsights = 3;
+const _weakCategoryThreshold = 3.5;
 
 class _DayInfo {
   final String label;
@@ -35,6 +40,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _hasCompletedToday = false;
   List<_DayInfo> _weekDays = [];
   LessonItem? _nextLesson;
+  bool _isAdaptiveRecommendation = false;
+  String? _progressSummary;
   String? _error;
 
   @override
@@ -75,7 +82,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               .order('order_index');
       final progressRows = await supabase
           .from('progress')
-          .select('lesson_id, completed, completed_at')
+          .select('lesson_id, completed, completed_at, score')
           .eq('user_id', userId);
 
       final completedLessonIds = (progressRows as List)
@@ -103,7 +110,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       });
 
-      LessonItem? nextLesson;
+      final lessonsById = {for (final row in lessonRows) row['id'] as String: row as Map<String, dynamic>};
+      final availableLessonRows = <Map<String, dynamic>>[];
       for (final row in lessonRows) {
         final id = row['id'] as String;
         if (completedLessonIds.contains(id)) continue;
@@ -111,9 +119,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final moduleLocked = (parentModule?['is_premium'] as bool?) == true && !isPremiumUser;
         final lessonLocked = row['access_level'] == 'premium' && !isPremiumUser;
         if (moduleLocked || lessonLocked) continue;
-        nextLesson = LessonItem.fromMap(row as Map<String, dynamic>);
-        break;
+        availableLessonRows.add(row as Map<String, dynamic>);
       }
+
+      final defaultNextLesson = availableLessonRows.isEmpty ? null : availableLessonRows.first;
+      Map<String, dynamic>? nextLessonRow = defaultNextLesson;
+      var isAdaptive = false;
+
+      final completedRows = progressRows.where((row) => row['completed'] == true).toList();
+      if (completedRows.length >= _minCompletedLessonsForInsights) {
+        final statsByCategory = <String, List<num>>{};
+        for (final row in completedRows) {
+          final lesson = lessonsById[row['lesson_id'] as String];
+          final category = (lesson?['category'] as String?) ?? 'Général';
+          statsByCategory.putIfAbsent(category, () => []).add((row['score'] as num?) ?? 0);
+        }
+        String? weakestCategory;
+        var lowestAvg = double.infinity;
+        statsByCategory.forEach((category, scores) {
+          final avg = scores.reduce((a, b) => a + b) / scores.length;
+          if (avg < _weakCategoryThreshold && avg < lowestAvg) {
+            lowestAvg = avg.toDouble();
+            weakestCategory = category;
+          }
+        });
+
+        if (weakestCategory != null) {
+          final reinforcement = availableLessonRows.firstWhere(
+            (row) => (row['category'] as String?) == weakestCategory,
+            orElse: () => <String, dynamic>{},
+          );
+          if (reinforcement.isNotEmpty && reinforcement['id'] != defaultNextLesson?['id']) {
+            nextLessonRow = reinforcement;
+            isAdaptive = true;
+          }
+        }
+      }
+
+      final nextLesson = nextLessonRow == null ? null : LessonItem.fromMap(nextLessonRow);
 
       final lastActivityDate = streakRow?['last_activity_date'] as String?;
       final yesterdayKey = DateFormat('yyyy-MM-dd').format(now.subtract(const Duration(days: 1)));
@@ -126,17 +169,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _hasCompletedToday = hasCompletedToday;
         _weekDays = weekDays;
         _nextLesson = nextLesson;
+        _isAdaptiveRecommendation = isAdaptive;
         _isLoading = false;
       });
 
       if (!hasCompletedToday) {
         _maybeShowWelcomeBack();
       }
+      _loadProgressSummary();
     } catch (e) {
       setState(() {
         _error = 'Impossible de charger ton tableau de bord.';
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadProgressSummary() async {
+    final token = Supabase.instance.client.auth.currentSession?.accessToken;
+    if (token == null) return;
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${ApiConfig.baseUrl}/api/mobile/progress-summary'),
+            headers: {'Authorization': 'Bearer $token'},
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) return;
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (mounted) setState(() => _progressSummary = data['summary'] as String?);
+    } catch (_) {
+      // Silencieux : le résumé est un bonus, pas critique pour l'usage du dashboard.
     }
   }
 
@@ -290,6 +354,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: const TextStyle(color: Colors.white),
                 ),
                 const SizedBox(height: 14),
+                if (_isAdaptiveRecommendation) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.auto_awesome, size: 12, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text('Recommandé pour toi', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
                 ElevatedButton(
                   onPressed: () {
                     if (_nextLesson != null) {
@@ -304,6 +386,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
+          if (_progressSummary != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.auto_awesome, color: Color(0xFFB45309), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _progressSummary!,
+                      style: const TextStyle(color: Color(0xFF78350F), fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
           Text('Objectifs du jour', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
