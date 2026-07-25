@@ -315,3 +315,43 @@ Rédige :
 
   return readJsonResponse<DraftedLessonFields>(response.text);
 }
+
+interface CategoryStat {
+  category: string;
+  avgScore: number;
+  lessonsCompleted: number;
+}
+
+interface SummarizeProgressParams {
+  firstName: string;
+  level: string;
+  completedLessonsCount: number;
+  currentStreak: number;
+  categoryStats: CategoryStat[];
+}
+
+export async function summarizeProgress({
+  firstName,
+  level,
+  completedLessonsCount,
+  currentStreak,
+  categoryStats,
+}: SummarizeProgressParams): Promise<string> {
+  const response = await getClient().models.generateContent({
+    model: MODEL,
+    contents: `Tu es coach pédagogique pour ANTA, une plateforme d'apprentissage de l'anglais pour de jeunes Africains.
+
+Voici les statistiques réelles de progression de ${firstName} (niveau ${level}) :
+- ${completedLessonsCount} leçon(s) complétée(s) au total.
+- Streak actuel : ${currentStreak} jour(s).
+- Score moyen par catégorie de leçon (sur 5) :
+${categoryStats.map((c) => `  - ${c.category} : ${c.avgScore}/5 sur ${c.lessonsCompleted} leçon(s)`).join('\n')}
+
+Rédige un court message d'encouragement personnalisé (1 à 2 phrases, en français, ton chaleureux et motivant) qui :
+- félicite la catégorie où le score moyen est le plus élevé,
+- encourage à progresser sur la catégorie où le score moyen est le plus bas (sans être négatif).
+Base-toi uniquement sur ces chiffres réels, n'invente aucune donnée.`,
+  });
+
+  return response.text?.trim() ?? '';
+}

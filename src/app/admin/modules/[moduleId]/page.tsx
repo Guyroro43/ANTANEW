@@ -149,6 +149,7 @@ export default function Page() {
         <LessonForm
           key={editingLesson?.id ?? 'new'}
           initialValue={editingLesson ?? undefined}
+          moduleTitle={currentModule?.title ?? ''}
           onSubmit={handleSubmit}
           onCancel={() => setModalOpen(false)}
         />

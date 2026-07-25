@@ -5,10 +5,12 @@ import { createClient } from '@/lib/supabase/client';
 import { FieldInput } from '@/components/ui/field-input';
 import { Toggle } from '@/components/ui/Toggle';
 import { Button } from '@/components/ui/button';
+import { Icon, icons } from '@/components/ui/Icon';
 import type { LessonInsert, Lesson } from '@/types/module';
 
 interface LessonFormProps {
   initialValue?: Lesson;
+  moduleTitle: string;
   onSubmit: (values: Omit<LessonInsert, 'module_id'>) => Promise<void>;
   onCancel: () => void;
 }
@@ -27,7 +29,9 @@ const accessLevels = [
   { value: 'all', label: 'Tout le monde' },
 ] as const;
 
-export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps) {
+export function LessonForm({ initialValue, moduleTitle, onSubmit, onCancel }: LessonFormProps) {
+  const [brief, setBrief] = useState('');
+  const [isDrafting, setIsDrafting] = useState(false);
   const [values, setValues] = useState({
     title: initialValue?.title ?? '',
     description: initialValue?.description ?? '',
@@ -44,6 +48,29 @@ export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleDraft = async () => {
+    if (!brief.trim()) {
+      setError('Décris en quelques mots la leçon que tu veux créer.');
+      return;
+    }
+    setIsDrafting(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/admin/content/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'lesson', brief, moduleTitle }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? 'Échec de la génération.');
+      setValues((prev) => ({ ...prev, title: data.title, description: data.description, category: data.category }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Échec de la génération.');
+    } finally {
+      setIsDrafting(false);
+    }
+  };
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -122,6 +149,27 @@ export function LessonForm({ initialValue, onSubmit, onCancel }: LessonFormProps
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="rounded-xl border border-dashed border-red-300 bg-red-50/50 p-4 dark:border-yellow-700 dark:bg-yellow-950/20">
+        <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+          Assistant IA — décris la leçon en quelques mots
+        </label>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            type="text"
+            value={brief}
+            onChange={(e) => setBrief(e.target.value)}
+            placeholder="Ex : commander à manger au restaurant"
+            className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-red-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          />
+          <Button type="button" variant="outline" onClick={handleDraft} disabled={isDrafting}>
+            <Icon icon={icons.sparkles} className="h-4 w-4" />
+            {isDrafting ? 'Génération…' : 'Générer avec l’IA'}
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          Remplit titre, description et catégorie ci-dessous — relis et ajuste avant d&apos;enregistrer.
+        </p>
+      </div>
       <FieldInput
         label="Titre"
         value={values.title}
