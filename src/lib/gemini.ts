@@ -1,20 +1,21 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI, Type } from '@google/genai';
 
-let client: Anthropic | null = null;
+let client: GoogleGenAI | null = null;
 
 function getClient() {
   if (!client) {
-    client = new Anthropic();
+    client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   }
   return client;
 }
 
-function readJsonResponse<T>(response: Anthropic.Message): T {
-  const textBlock = response.content.find((block) => block.type === 'text');
-  if (!textBlock || textBlock.type !== 'text') {
+const MODEL = 'gemini-2.5-flash';
+
+function readJsonResponse<T>(text: string | undefined): T {
+  if (!text) {
     throw new Error('Réponse IA vide ou invalide.');
   }
-  return JSON.parse(textBlock.text) as T;
+  return JSON.parse(text) as T;
 }
 
 export interface GeneratedQuestion {
@@ -24,27 +25,24 @@ export interface GeneratedQuestion {
   explanation: string;
 }
 
-const quizQuestionsSchema = {
-  type: 'object',
+const quizQuestionSchema = {
+  type: Type.OBJECT,
   properties: {
-    questions: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          question_text: { type: 'string' },
-          options: { type: 'array', items: { type: 'string' } },
-          correct_index: { type: 'integer' },
-          explanation: { type: 'string' },
-        },
-        required: ['question_text', 'options', 'correct_index', 'explanation'],
-        additionalProperties: false,
-      },
-    },
+    question_text: { type: Type.STRING },
+    options: { type: Type.ARRAY, items: { type: Type.STRING } },
+    correct_index: { type: Type.INTEGER },
+    explanation: { type: Type.STRING },
+  },
+  required: ['question_text', 'options', 'correct_index', 'explanation'],
+};
+
+const quizQuestionsSchema = {
+  type: Type.OBJECT,
+  properties: {
+    questions: { type: Type.ARRAY, items: quizQuestionSchema },
   },
   required: ['questions'],
-  additionalProperties: false,
-} as const;
+};
 
 interface GenerateQuizQuestionsParams {
   moduleTitle: string;
@@ -63,18 +61,9 @@ export async function generateQuizQuestions({
   difficulty,
   count,
 }: GenerateQuizQuestionsParams): Promise<GeneratedQuestion[]> {
-  const response = await getClient().messages.create({
-    model: 'claude-opus-4-8',
-    max_tokens: 4096,
-    thinking: { type: 'adaptive' },
-    output_config: {
-      effort: 'medium',
-      format: { type: 'json_schema', schema: quizQuestionsSchema },
-    },
-    messages: [
-      {
-        role: 'user',
-        content: `Tu es concepteur pédagogique pour ANTA, une plateforme d'apprentissage de l'anglais pour de jeunes Africains (Côte d'Ivoire).
+  const response = await getClient().models.generateContent({
+    model: MODEL,
+    contents: `Tu es concepteur pédagogique pour ANTA, une plateforme d'apprentissage de l'anglais pour de jeunes Africains (Côte d'Ivoire).
 
 Génère exactement ${count} questions à choix multiple (QCM) en français pour évaluer la leçon suivante :
 
@@ -89,11 +78,13 @@ Consignes :
 - Chaque question a exactement 4 options, une seule correcte.
 - "correct_index" est l'index (0 à 3) de la bonne option dans le tableau "options".
 - "explanation" justifie brièvement la bonne réponse, en français, de façon pédagogique.`,
-      },
-    ],
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: quizQuestionsSchema,
+    },
   });
 
-  return readJsonResponse<{ questions: GeneratedQuestion[] }>(response).questions;
+  return readJsonResponse<{ questions: GeneratedQuestion[] }>(response.text).questions;
 }
 
 interface GenerateQuizQuestionsFromPdfParams {
@@ -111,24 +102,20 @@ export async function generateQuizQuestionsFromPdf({
   difficulty,
   count,
 }: GenerateQuizQuestionsFromPdfParams): Promise<GeneratedQuestion[]> {
-  const response = await getClient().messages.create({
-    model: 'claude-opus-4-8',
-    max_tokens: 4096,
-    thinking: { type: 'adaptive' },
-    output_config: {
-      effort: 'medium',
-      format: { type: 'json_schema', schema: quizQuestionsSchema },
-    },
-    messages: [
+  const pdfResponse = await fetch(pdfUrl);
+  if (!pdfResponse.ok) {
+    throw new Error('Impossible de télécharger le PDF source.');
+  }
+  const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
+
+  const response = await getClient().models.generateContent({
+    model: MODEL,
+    contents: [
       {
         role: 'user',
-        content: [
+        parts: [
+          { inlineData: { mimeType: 'application/pdf', data: pdfBuffer.toString('base64') } },
           {
-            type: 'document',
-            source: { type: 'url', url: pdfUrl },
-          },
-          {
-            type: 'text',
             text: `Tu es concepteur pédagogique pour ANTA, une plateforme d'apprentissage de l'anglais pour de jeunes Africains (Côte d'Ivoire).
 
 Analyse le contenu de ce document PDF, qui sert de support à la leçon suivante :
@@ -148,9 +135,13 @@ Consignes :
         ],
       },
     ],
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: quizQuestionsSchema,
+    },
   });
 
-  return readJsonResponse<{ questions: GeneratedQuestion[] }>(response).questions;
+  return readJsonResponse<{ questions: GeneratedQuestion[] }>(response.text).questions;
 }
 
 export interface WrongAnswerItem {
@@ -180,39 +171,9 @@ export async function explainWrongAnswers({
     return [];
   }
 
-  const response = await getClient().messages.create({
-    model: 'claude-opus-4-8',
-    max_tokens: 2048,
-    thinking: { type: 'adaptive' },
-    output_config: {
-      effort: 'medium',
-      format: {
-        type: 'json_schema',
-        schema: {
-          type: 'object',
-          properties: {
-            feedback: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  question_id: { type: 'string' },
-                  message: { type: 'string' },
-                },
-                required: ['question_id', 'message'],
-                additionalProperties: false,
-              },
-            },
-          },
-          required: ['feedback'],
-          additionalProperties: false,
-        },
-      },
-    },
-    messages: [
-      {
-        role: 'user',
-        content: `Un apprenant d'anglais sur ANTA vient de se tromper sur ${items.length} question(s) de la leçon « ${lessonTitle} ». Pour chaque question, explique-lui en français, avec bienveillance et pédagogie, pourquoi sa réponse est fausse et ce qu'il aurait dû répondre.
+  const response = await getClient().models.generateContent({
+    model: MODEL,
+    contents: `Un apprenant d'anglais sur ANTA vient de se tromper sur ${items.length} question(s) de la leçon « ${lessonTitle} ». Pour chaque question, explique-lui en français, avec bienveillance et pédagogie, pourquoi sa réponse est fausse et ce qu'il aurait dû répondre.
 
 ${items
   .map(
@@ -225,9 +186,27 @@ ${item.explanation ? `Indice existant : ${item.explanation}` : ''}`,
   .join('\n\n')}
 
 Réponds avec un "message" par question, en réutilisant exactement le "question_id" fourni pour chacune.`,
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          feedback: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                question_id: { type: Type.STRING },
+                message: { type: Type.STRING },
+              },
+              required: ['question_id', 'message'],
+            },
+          },
+        },
+        required: ['feedback'],
       },
-    ],
+    },
   });
 
-  return readJsonResponse<{ feedback: WrongAnswerFeedback[] }>(response).feedback;
+  return readJsonResponse<{ feedback: WrongAnswerFeedback[] }>(response.text).feedback;
 }

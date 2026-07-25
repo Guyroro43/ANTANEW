@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { generateQuizQuestions, generateQuizQuestionsFromPdf } from '@/lib/anthropic';
+import { generateQuizQuestions, generateQuizQuestionsFromPdf } from '@/lib/gemini';
 
 export async function POST(request: Request) {
   const supabase = createClient();
