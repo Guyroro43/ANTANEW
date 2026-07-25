@@ -243,7 +243,7 @@ export function PlacementTestRunner({ firstName, topic, questions }: PlacementTe
                 {levelCopy[result.level].emoji} Niveau {levelCopy[result.level].label}
               </h1>
               <p className="text-slate-600 dark:text-slate-300">
-                {result.correct_count} / {result.total} bonnes réponses sur « {topic} ». Tes leçons seront adaptées à ce niveau — tu pourras progresser au fil du temps.
+                Tes leçons seront adaptées à ce niveau — tu pourras progresser au fil du temps.
               </p>
               <Button onClick={goToDashboard} className="mt-2 w-full">
                 Aller à mon dashboard
