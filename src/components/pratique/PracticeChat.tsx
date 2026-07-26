@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Send, Mic, MicOff, MessageCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PERSONAS, getPersona } from '@/lib/personas';
+import { splitIntoSpeechSegments } from '@/lib/googleTts';
 
 interface ChatMessage {
   role: 'user' | 'model';
@@ -49,6 +50,35 @@ declare global {
 
 const PERSONA_STORAGE_KEY = 'anta_pratique_persona';
 
+// Les voix du navigateur n'exposent pas de champ "genre" fiable — on repère
+// les voix courantes connues par plateforme, avec repli sur une répartition
+// simple si aucune ne correspond, pour que les 4 personnages restent
+// distinguables.
+const VOICE_HINTS: Record<string, { en: string[]; fr: string[] }> = {
+  kora: { en: ['zira', 'aria', 'jenny', 'female'], fr: ['hortense', 'denise', 'julie'] },
+  amara: { en: ['hazel', 'susan', 'samantha', 'salli'], fr: ['celine', 'audrey', 'amelie'] },
+  kwame: { en: ['david', 'mark', 'guy', 'male'], fr: ['paul', 'henri', 'thomas'] },
+  sango: { en: ['james', 'daniel', 'ryan'], fr: ['nicolas', 'antoine', 'remi'] },
+};
+
+function pickVoiceForPersona(
+  voices: SpeechSynthesisVoice[],
+  personaId: string,
+  lang: 'en' | 'fr',
+  usedURIs: Set<string>,
+): SpeechSynthesisVoice | undefined {
+  const candidates = voices.filter((v) => v.lang.toLowerCase().startsWith(lang));
+  const hints = VOICE_HINTS[personaId]?.[lang] ?? [];
+
+  for (const hint of hints) {
+    const match = candidates.find((v) => v.name.toLowerCase().includes(hint));
+    if (match) return match;
+  }
+
+  const unused = candidates.find((v) => !usedURIs.has(v.voiceURI));
+  return unused ?? candidates[0];
+}
+
 export function PracticeChat({ firstName }: PracticeChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -65,9 +95,9 @@ export function PracticeChat({ firstName }: PracticeChatProps) {
   const [personaId, setPersonaId] = useState('kora');
   const [showPersonaPicker, setShowPersonaPicker] = useState(false);
   const [avatarState, setAvatarState] = useState<AvatarState>('idle');
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const persona = getPersona(personaId);
 
@@ -75,9 +105,15 @@ export function PracticeChat({ firstName }: PracticeChatProps) {
     const stored = window.localStorage.getItem(PERSONA_STORAGE_KEY);
     if (stored) setPersonaId(stored);
     setVoiceSupported(Boolean(window.SpeechRecognition || window.webkitSpeechRecognition));
+
+    const loadVoices = () => setAvailableVoices(window.speechSynthesis?.getVoices() ?? []);
+    loadVoices();
+    window.speechSynthesis?.addEventListener('voiceschanged', loadVoices);
+
     return () => {
       recognitionRef.current?.stop();
-      audioRef.current?.pause();
+      window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices);
+      window.speechSynthesis?.cancel();
     };
   }, []);
 
@@ -92,32 +128,37 @@ export function PracticeChat({ firstName }: PracticeChatProps) {
   };
 
   const playSpeech = async (text: string) => {
-    setAvatarState('thinking');
-    try {
-      const response = await fetch('/api/pratique/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, personaId }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? 'Échec de la synthèse vocale.');
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
 
-      const segments: { audioContentBase64: string }[] = data.segments;
-      setAvatarState('speaking');
-      for (const segment of segments) {
-        await new Promise<void>((resolve) => {
-          const audio = new Audio(`data:audio/mp3;base64,${segment.audioContentBase64}`);
-          audioRef.current = audio;
-          audio.onended = () => resolve();
-          audio.onerror = () => resolve();
-          audio.play().catch(() => resolve());
-        });
-      }
-    } catch {
-      // Silencieux : l'audio est un bonus, la conversation textuelle reste fonctionnelle.
-    } finally {
-      setAvatarState('idle');
-    }
+    const segments = splitIntoSpeechSegments(text);
+    if (segments.length === 0) return;
+
+    const usedURIs = new Set<string>();
+    const withVoices = segments.map((segment) => {
+      const voice = pickVoiceForPersona(availableVoices, personaId, segment.lang, usedURIs);
+      if (voice) usedURIs.add(voice.voiceURI);
+      return { ...segment, voice };
+    });
+
+    setAvatarState('speaking');
+    await new Promise<void>((resolve) => {
+      const playNext = (index: number) => {
+        if (index >= withVoices.length) {
+          resolve();
+          return;
+        }
+        const segment = withVoices[index];
+        const utterance = new SpeechSynthesisUtterance(segment.text);
+        utterance.lang = segment.voice?.lang ?? (segment.lang === 'fr' ? 'fr-FR' : 'en-US');
+        if (segment.voice) utterance.voice = segment.voice;
+        utterance.onend = () => playNext(index + 1);
+        utterance.onerror = () => playNext(index + 1);
+        window.speechSynthesis.speak(utterance);
+      };
+      playNext(0);
+    });
+    setAvatarState('idle');
   };
 
   const sendMessage = async (text: string, speak: boolean) => {
