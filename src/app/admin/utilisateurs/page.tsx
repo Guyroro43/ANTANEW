@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/Spinner';
 import { UserTable } from '@/components/admin/UserTable';
 import type { Profile, SubscriptionPlan } from '@/types/user';
@@ -14,7 +13,6 @@ export default function Page() {
   const router = useRouter();
   const [users, setUsers] = useState<Profile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState('');
   const [planFilter, setPlanFilter] = useState<PlanFilter>('all');
 
   useEffect(() => {
@@ -28,16 +26,9 @@ export default function Page() {
   }, []);
 
   const filteredUsers = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return users.filter((user) => {
-      const matchesPlan = planFilter === 'all' || user.subscription_plan === planFilter;
-      const matchesSearch =
-        !query ||
-        user.first_name.toLowerCase().includes(query) ||
-        (user.email ?? '').toLowerCase().includes(query);
-      return matchesPlan && matchesSearch;
-    });
-  }, [users, search, planFilter]);
+    if (planFilter === 'all') return users;
+    return users.filter((user) => user.subscription_plan === planFilter);
+  }, [users, planFilter]);
 
   const filters: { label: string; value: PlanFilter }[] = [
     { label: 'Tous', value: 'all' },
@@ -51,12 +42,6 @@ export default function Page() {
       <h1 className="mt-2 text-3xl font-black text-slate-900 dark:text-white">Utilisateurs</h1>
 
       <div className="mt-6 flex flex-wrap items-center gap-4">
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Rechercher par prénom ou email…"
-          className="max-w-sm"
-        />
         <div className="flex gap-2">
           {filters.map((filter) => (
             <button
