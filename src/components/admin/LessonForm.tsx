@@ -260,12 +260,16 @@ export function LessonForm({ initialValue, moduleTitle, onSubmit, onCancel }: Le
             Stocké de façon privée : lu en interne par l&apos;app via une URL signée temporaire, jamais téléchargeable directement.
           </p>
           <FieldInput
-            label="Ou colle une URL externe"
+            label="Ou colle une URL externe (optionnel — inutile si tu as déjà importé un fichier ci-dessus)"
             className="mt-3"
             value={values.content_url}
             onChange={(e) => setValues({ ...values, content_url: e.target.value })}
             placeholder="https://…"
           />
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Taille maximale par fichier : 50 Mo (limite du palier gratuit Supabase). Au-delà, utilise une URL externe
+            (YouTube non répertorié, Vimeo...) ou compresse le fichier.
+          </p>
           {values.content_url && /^https?:\/\//.test(values.content_url) && (
             <a
               href={values.content_url}

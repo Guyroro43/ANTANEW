@@ -66,6 +66,14 @@ const lessonContentSchema = {
   required: ['vocabulary', 'questions'],
 };
 
+const questionsOnlySchema = {
+  type: Type.OBJECT,
+  properties: {
+    questions: { type: Type.ARRAY, items: quizQuestionSchema },
+  },
+  required: ['questions'],
+};
+
 const QUESTION_VARIETY_CONSIGNES = `- Les questions ne doivent PAS être un simple rappel du mot de vocabulaire tel qu'il vient d'être présenté (ex. répéter la même définition) — c'est trop facile si le mot vient d'être vu. Varie l'angle : utilise le mot dans une phrase ou un contexte nouveau, teste une nuance de sens, une collocation, ou une erreur fréquente chez un francophone.
 - Certaines questions peuvent dépasser légèrement le vocabulaire présenté (grammaire liée, usage courant) pour éviter un simple test de reconnaissance.
 - Les 3 mauvaises options doivent être plausibles, pas absurdes : mélange un piège de sens proche, un piège de forme proche (orthographe ou sonorité similaire, ex. faux-ami), et une option liée au thème mais incorrecte. Évite les options qui se devinent trivialement par élimination.`;
@@ -403,4 +411,90 @@ Règles :
   });
 
   return response.text?.trim() ?? '';
+}
+
+interface GenerateQuestionsFromMediaParams {
+  mediaUrl: string;
+  mimeType: string;
+  lessonTitle: string;
+  category: string | null;
+  difficulty: string | null;
+  count: number;
+}
+
+/**
+ * Pour les leçons vidéo/audio, l'apprenant consulte le média directement —
+ * pas besoin de vocabulaire généré, seulement des questions basées sur son
+ * contenu réel. Passe par les Files API de Gemini (pas d'inlineData base64)
+ * car les vidéos dépassent souvent la limite de 20 Mo d'une requête inline.
+ */
+export async function generateQuestionsFromMedia({
+  mediaUrl,
+  mimeType,
+  lessonTitle,
+  category,
+  difficulty,
+  count,
+}: GenerateQuestionsFromMediaParams): Promise<GeneratedQuestion[]> {
+  const mediaResponse = await fetch(mediaUrl);
+  if (!mediaResponse.ok) {
+    throw new Error('Impossible de télécharger le fichier média.');
+  }
+  const buffer = Buffer.from(await mediaResponse.arrayBuffer());
+
+  const client = getClient();
+  let uploadedFile = await client.files.upload({
+    file: new Blob([buffer], { type: mimeType }),
+    config: { mimeType },
+  });
+
+  const startedAt = Date.now();
+  while (uploadedFile.state === 'PROCESSING' && Date.now() - startedAt < 60_000) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (!uploadedFile.name) break;
+    uploadedFile = await client.files.get({ name: uploadedFile.name });
+  }
+  if (uploadedFile.state === 'FAILED') {
+    throw new Error('Le traitement du fichier média a échoué côté Gemini.');
+  }
+  if (!uploadedFile.uri) {
+    throw new Error("Échec de l'envoi du fichier média à Gemini.");
+  }
+
+  const mediaKind = mimeType.startsWith('video') ? 'vidéo' : 'audio';
+
+  const response = await client.models.generateContent({
+    model: MODEL,
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          { fileData: { fileUri: uploadedFile.uri, mimeType } },
+          {
+            text: `Tu es concepteur pédagogique pour ANTA, une plateforme d'apprentissage de l'anglais pour de jeunes Africains (Côte d'Ivoire).
+
+Regarde/écoute ce fichier ${mediaKind}, qui sert de support à la leçon suivante :
+
+Leçon : ${lessonTitle}
+${category ? `Catégorie : ${category}` : ''}
+Niveau : ${difficulty ?? 'debutant'}
+
+L'apprenant consulte directement ce ${mediaKind} dans l'app — génère uniquement des questions pour vérifier sa compréhension, exactement ${count} questions, basées uniquement sur le contenu réel du ${mediaKind} (pas sur des connaissances générales).
+
+Consignes :
+- Exactement 4 options par question, une seule correcte.
+${QUESTION_VARIETY_CONSIGNES}
+- "correct_index" est l'index (0 à 3) de la bonne option dans le tableau "options".
+- "explanation" justifie brièvement la bonne réponse, en français, de façon pédagogique.`,
+          },
+        ],
+      },
+    ],
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: questionsOnlySchema,
+    },
+  });
+
+  return readJsonResponse<{ questions: GeneratedQuestion[] }>(response.text).questions;
 }

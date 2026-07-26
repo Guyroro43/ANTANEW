@@ -1,6 +1,23 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { generateLessonContent, generateLessonContentFromPdf } from '@/lib/gemini';
+import { generateLessonContent, generateLessonContentFromPdf, generateQuestionsFromMedia } from '@/lib/gemini';
+
+const MIME_TYPES_BY_EXTENSION: Record<string, string> = {
+  mp4: 'video/mp4',
+  mov: 'video/quicktime',
+  webm: 'video/webm',
+  mkv: 'video/x-matroska',
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  m4a: 'audio/mp4',
+  ogg: 'audio/ogg',
+};
+
+function guessMimeType(url: string, contentType: 'video' | 'audio') {
+  const extension = url.split('.').pop()?.toLowerCase().split('?')[0];
+  if (extension && MIME_TYPES_BY_EXTENSION[extension]) return MIME_TYPES_BY_EXTENSION[extension];
+  return contentType === 'video' ? 'video/mp4' : 'audio/mpeg';
+}
 
 export async function POST(request: Request) {
   const supabase = createClient();
@@ -20,7 +37,7 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null);
   const lessonId = body?.lessonId as string | undefined;
-  const source = body?.source === 'pdf' ? 'pdf' : 'text';
+  const source = body?.source === 'pdf' ? 'pdf' : body?.source === 'media' ? 'media' : 'text';
   const count = Math.min(Math.max(Number(body?.count) || 5, 1), 10);
   const vocabCount = Math.min(Math.max(Number(body?.vocabCount) || 5, 0), 8);
 
@@ -61,6 +78,24 @@ export async function POST(request: Request) {
         count,
         vocabCount,
       });
+    } else if (source === 'media') {
+      if (!lesson.content_url || (lesson.content_type !== 'video' && lesson.content_type !== 'audio')) {
+        return NextResponse.json({ error: 'Aucun fichier vidéo/audio associé à cette leçon.' }, { status: 400 });
+      }
+      const isExternalUrl = /^https?:\/\//.test(lesson.content_url);
+      const mediaUrl = isExternalUrl
+        ? lesson.content_url
+        : supabase.storage.from('lesson-media').getPublicUrl(lesson.content_url).data.publicUrl;
+
+      const questions = await generateQuestionsFromMedia({
+        mediaUrl,
+        mimeType: guessMimeType(lesson.content_url, lesson.content_type),
+        lessonTitle: lesson.title,
+        category: lesson.category,
+        difficulty: lesson.difficulty,
+        count,
+      });
+      generated = { questions, vocabulary: [] };
     } else {
       const { data: moduleRow } = await supabase.from('modules').select('title').eq('id', lesson.module_id).single();
       generated = await generateLessonContent({

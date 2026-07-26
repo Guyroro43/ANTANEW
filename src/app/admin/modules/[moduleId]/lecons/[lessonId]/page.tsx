@@ -24,7 +24,7 @@ export default function Page() {
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [vocabModalOpen, setVocabModalOpen] = useState(false);
   const [editingVocab, setEditingVocab] = useState<VocabularyItem | null>(null);
-  const [isGenerating, setIsGenerating] = useState<'text' | 'pdf' | null>(null);
+  const [isGenerating, setIsGenerating] = useState<'text' | 'pdf' | 'media' | null>(null);
   const [generateError, setGenerateError] = useState<string | null>(null);
 
   const loadData = async () => {
@@ -81,7 +81,7 @@ export default function Page() {
     await loadData();
   };
 
-  const handleGenerate = async (source: 'text' | 'pdf') => {
+  const handleGenerate = async (source: 'text' | 'pdf' | 'media') => {
     setIsGenerating(source);
     setGenerateError(null);
     try {
@@ -199,14 +199,26 @@ export default function Page() {
       <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-8 dark:border-slate-800">
         <h2 className="text-2xl font-black text-slate-900 dark:text-white">Questions</h2>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => handleGenerate('text')} disabled={isGenerating !== null}>
-            <Icon icon={icons.sparkles} className="h-4 w-4" />
-            {isGenerating === 'text' ? 'Génération…' : 'Générer avec l’IA'}
-          </Button>
-          {lesson.source_pdf_path && (
-            <Button variant="outline" onClick={() => handleGenerate('pdf')} disabled={isGenerating !== null}>
-              <Icon icon={icons.doc} className="h-4 w-4" />
-              {isGenerating === 'pdf' ? 'Génération…' : 'Générer depuis le PDF'}
+          {lesson.content_type === 'qcm' && (
+            <>
+              <Button variant="outline" onClick={() => handleGenerate('text')} disabled={isGenerating !== null}>
+                <Icon icon={icons.sparkles} className="h-4 w-4" />
+                {isGenerating === 'text' ? 'Génération…' : 'Générer avec l’IA'}
+              </Button>
+              {lesson.source_pdf_path && (
+                <Button variant="outline" onClick={() => handleGenerate('pdf')} disabled={isGenerating !== null}>
+                  <Icon icon={icons.doc} className="h-4 w-4" />
+                  {isGenerating === 'pdf' ? 'Génération…' : 'Générer depuis le PDF'}
+                </Button>
+              )}
+            </>
+          )}
+          {(lesson.content_type === 'video' || lesson.content_type === 'audio') && lesson.content_url && (
+            <Button variant="outline" onClick={() => handleGenerate('media')} disabled={isGenerating !== null}>
+              <Icon icon={lesson.content_type === 'video' ? icons.video : icons.speaker} className="h-4 w-4" />
+              {isGenerating === 'media'
+                ? 'Génération…'
+                : `Générer depuis ${lesson.content_type === 'video' ? 'la vidéo' : "l'audio"}`}
             </Button>
           )}
           <Button onClick={openCreate}>
