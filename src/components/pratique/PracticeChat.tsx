@@ -55,6 +55,8 @@ export function PracticeChat({ firstName }: PracticeChatProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [speakReplies, setSpeakReplies] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
@@ -64,18 +66,58 @@ export function PracticeChat({ firstName }: PracticeChatProps) {
 
   useEffect(() => {
     setVoiceSupported(typeof window !== 'undefined' && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition));
+
+    const loadVoices = () => {
+      const voices = window.speechSynthesis?.getVoices() ?? [];
+      const englishFirst = [...voices].sort((a, b) => Number(b.lang.startsWith('en')) - Number(a.lang.startsWith('en')));
+      setAvailableVoices(englishFirst);
+      setSelectedVoiceURI((prev) => prev || englishFirst.find((v) => v.lang.startsWith('en'))?.voiceURI || '');
+    };
+
+    loadVoices();
+    window.speechSynthesis?.addEventListener('voiceschanged', loadVoices);
+
     return () => {
       recognitionRef.current?.stop();
-      if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
+      window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices);
+      window.speechSynthesis?.cancel();
     };
   }, []);
+
+  const sanitizeForSpeech = (text: string) =>
+    text
+      .replace(/💡/g, '')
+      .replace(/[*_#`~]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
 
   const speak = (text: string) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    window.speechSynthesis.speak(utterance);
+
+    // La correction (ligne préfixée "💡" dans le prompt de Kora) est toujours
+    // en français, le reste toujours en anglais — pas besoin de détection de
+    // langue générique, la structure du message le dit déjà.
+    const segments = text
+      .split('\n')
+      .map((line) => ({ isFrench: line.trim().startsWith('💡'), text: sanitizeForSpeech(line) }))
+      .filter((segment) => segment.text.length > 0);
+
+    const englishVoice = availableVoices.find((v) => v.voiceURI === selectedVoiceURI);
+    const frenchVoice = availableVoices.find((v) => v.lang.startsWith('fr'));
+
+    const playNext = (index: number) => {
+      if (index >= segments.length) return;
+      const segment = segments[index];
+      const utterance = new SpeechSynthesisUtterance(segment.text);
+      const voice = segment.isFrench ? frenchVoice : englishVoice;
+      utterance.lang = voice?.lang ?? (segment.isFrench ? 'fr-FR' : 'en-US');
+      if (voice) utterance.voice = voice;
+      utterance.onend = () => playNext(index + 1);
+      window.speechSynthesis.speak(utterance);
+    };
+
+    playNext(0);
   };
 
   const toggleRecording = () => {
@@ -133,25 +175,40 @@ export function PracticeChat({ firstName }: PracticeChatProps) {
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-red-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
-      <div className="flex items-center gap-3 border-b border-slate-200 bg-gradient-to-r from-red-600 via-red-500 to-yellow-500 p-4 text-white dark:border-slate-700 dark:from-green-700 dark:via-green-600 dark:to-emerald-500">
-        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-white/20">
-          <Sparkles className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-bold">Kora</p>
-          <p className="truncate text-xs text-white/80">Partenaire de conversation — entraînement libre, pas une évaluation</p>
+      <div className="border-b border-slate-200 bg-gradient-to-r from-red-600 via-red-500 to-yellow-500 p-4 text-white dark:border-slate-700 dark:from-green-700 dark:via-green-600 dark:to-emerald-500">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-white/20">
+            <Sparkles className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-bold">Kora</p>
+            <p className="truncate text-xs text-white/80">Partenaire de conversation — entraînement libre, pas une évaluation</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSpeakReplies((prev) => !prev);
+              window.speechSynthesis?.cancel();
+            }}
+            aria-label={speakReplies ? 'Désactiver la lecture audio des réponses' : 'Activer la lecture audio des réponses'}
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white/20 transition hover:bg-white/30"
+          >
+            {speakReplies ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setSpeakReplies((prev) => !prev);
-            window.speechSynthesis?.cancel();
-          }}
-          aria-label={speakReplies ? 'Désactiver la lecture audio des réponses' : 'Activer la lecture audio des réponses'}
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white/20 transition hover:bg-white/30"
-        >
-          {speakReplies ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-        </button>
+        {speakReplies && availableVoices.length > 0 && (
+          <select
+            value={selectedVoiceURI}
+            onChange={(e) => setSelectedVoiceURI(e.target.value)}
+            className="mt-3 w-full rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-xs text-white outline-none [&>option]:text-slate-900"
+          >
+            {availableVoices.map((voice) => (
+              <option key={voice.voiceURI} value={voice.voiceURI}>
+                {voice.name} ({voice.lang})
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
