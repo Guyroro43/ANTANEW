@@ -29,6 +29,13 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Augmenter la mémoire Gradle pour le runner CI (sans toucher au fichier local)
+        run: |
+          echo "" >> android/gradle.properties
+          echo "org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=1024m" >> android/gradle.properties
+          echo "org.gradle.parallel=true" >> android/gradle.properties
+          echo "kotlin.daemon.jvm.options=-Xmx1536m" >> android/gradle.properties
+
       - run: flutter pub get
 
       - run: flutter build apk --debug
