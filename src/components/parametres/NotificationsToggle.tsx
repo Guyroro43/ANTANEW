@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { requestWebPushToken } from '@/lib/firebase-client';
 import { Toggle } from '@/components/ui/Toggle';
 
 interface NotificationsToggleProps {
@@ -23,7 +24,21 @@ export function NotificationsToggle({ userId, initialEnabled }: NotificationsTog
 
     if (error) {
       setEnabled(previous);
+      setSaving(false);
+      return;
     }
+
+    if (next) {
+      requestWebPushToken()
+        .then(async (token) => {
+          if (!token) return;
+          await supabase.from('device_tokens').upsert({ user_id: userId, token, platform: 'web' }, { onConflict: 'token' });
+        })
+        .catch(() => {});
+    } else {
+      await supabase.from('device_tokens').delete().eq('user_id', userId);
+    }
+
     setSaving(false);
   };
 

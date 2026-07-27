@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/theme_controller.dart';
+import '../services/push_notifications_service.dart';
 
 class ParametresScreen extends StatefulWidget {
   const ParametresScreen({super.key});
@@ -46,10 +47,16 @@ class _ParametresScreenState extends State<ParametresScreen> {
     final supabase = Supabase.instance.client;
     final userId = supabase.auth.currentUser?.id;
     try {
+      if (userId == null) return;
       await supabase
           .from('profiles')
           .update({'notifications_enabled': value})
-          .eq('id', userId as Object);
+          .eq('id', userId);
+      if (value) {
+        await PushNotificationsService.registerDevice(userId);
+      } else {
+        await PushNotificationsService.unregisterAll(userId);
+      }
     } catch (e) {
       setState(() => _notificationsEnabled = previous);
     } finally {

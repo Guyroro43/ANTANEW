@@ -46,3 +46,6 @@ app.*.map.json
 /android/.gradle/
 /android/.kotlin/
 /android/local.properties
+
+# Firebase — identifiants du projet, injectés en CI via secret, pas commités
+/android/app/google-services.json

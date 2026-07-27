@@ -342,6 +342,60 @@ export interface Database {
           },
         ];
       };
+      device_tokens: {
+        Row: {
+          id: string;
+          user_id: string;
+          token: string;
+          platform: 'web' | 'android';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          token: string;
+          platform: 'web' | 'android';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['device_tokens']['Insert']>;
+        Relationships: [
+          {
+            foreignKeyName: 'device_tokens_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      notification_broadcasts: {
+        Row: {
+          id: string;
+          sender_id: string | null;
+          title: string;
+          body: string;
+          target: 'all' | 'selected';
+          recipient_count: number;
+          sent_count: number;
+          failed_count: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          sender_id?: string | null;
+          title: string;
+          body: string;
+          target: 'all' | 'selected';
+          recipient_count?: number;
+          sent_count?: number;
+          failed_count?: number;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['notification_broadcasts']['Insert']>;
+        Relationships: [];
+      };
       placement_questions: {
         Row: {
           id: string;

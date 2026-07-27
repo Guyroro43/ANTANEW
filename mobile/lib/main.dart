@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/supabase_config.dart';
@@ -6,6 +7,7 @@ import 'config/theme_controller.dart';
 import 'screens/app_shell.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/placement_test_screen.dart';
+import 'services/push_notifications_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +16,15 @@ Future<void> main() async {
     publishableKey: SupabaseConfig.anonKey,
   );
   await ThemeController.load();
+
+  // Firebase (notifications push) : tant que google-services.json n'est pas
+  // configuré côté Android, l'initialisation échoue silencieusement plutôt
+  // que de bloquer le lancement de l'app.
+  try {
+    await Firebase.initializeApp();
+    await PushNotificationsService.initialize();
+  } catch (_) {}
+
   runApp(const AntaApp());
 }
 

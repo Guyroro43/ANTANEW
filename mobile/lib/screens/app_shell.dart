@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dashboard_screen.dart';
 import 'modules_screen.dart';
 import 'classement_screen.dart';
 import 'badges_screen.dart';
 import 'profil_screen.dart';
 import 'pratique_screen.dart';
+import '../services/push_notifications_service.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -40,6 +42,30 @@ class AppShellState extends State<AppShell> {
   ];
 
   void goToTab(int index) => setState(() => _currentIndex = index);
+
+  @override
+  void initState() {
+    super.initState();
+    _registerPushDevice();
+  }
+
+  Future<void> _registerPushDevice() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      final row = await Supabase.instance.client
+          .from('profiles')
+          .select('notifications_enabled')
+          .eq('id', userId)
+          .single();
+      final enabled = (row['notifications_enabled'] as bool?) ?? true;
+      if (enabled) {
+        await PushNotificationsService.registerDevice(userId);
+      }
+    } catch (_) {
+      // Firebase pas encore configuré ou pas de réseau : on ne bloque pas l'app.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
