@@ -33,6 +33,8 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 set local role authenticated;
 select throws_ok(
   $$ insert into public.modules (slug, title) values ('test-learner', 'Test learner') $$,
+  '42501',
+  'new row violates row-level security policy for table "modules"',
   'Un apprenant ne peut pas créer de module'
 );
 reset role;
@@ -51,6 +53,8 @@ select set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003
 set local role authenticated;
 select throws_ok(
   $$ insert into public.modules (slug, title) values ('test-founder', 'Test founder') $$,
+  '42501',
+  'new row violates row-level security policy for table "modules"',
   'Un fondateur seul ne peut pas créer de module'
 );
 reset role;
@@ -69,6 +73,8 @@ select set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001
 set local role authenticated;
 select throws_ok(
   $$ update public.profiles set role = 'developer' where id = 'a0000000-0000-0000-0000-000000000001' $$,
+  '42501',
+  'permission denied for table profiles',
   'Un apprenant ne peut pas modifier son propre rôle'
 );
 
@@ -97,6 +103,8 @@ select is(
 -- 9) Un apprenant ne peut pas poster de message.
 select throws_ok(
   $$ insert into public.messages (author_id, content) values ('a0000000-0000-0000-0000-000000000001', 'Coucou') $$,
+  '42501',
+  'new row violates row-level security policy for table "messages"',
   'Un apprenant ne peut pas poster de message'
 );
 reset role;
