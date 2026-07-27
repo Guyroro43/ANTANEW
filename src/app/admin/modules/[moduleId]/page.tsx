@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { GripVertical } from 'lucide-react';
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { LessonForm } from '@/components/admin/LessonForm';
+import { SortableItem } from '@/components/admin/SortableItem';
 import { Icon, icons } from '@/components/ui/Icon';
 import type { Module, Lesson, LessonInsert } from '@/types/module';
 
@@ -69,6 +73,21 @@ export default function Page() {
     await loadData();
   };
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = lessons.findIndex((l) => l.id === active.id);
+    const newIndex = lessons.findIndex((l) => l.id === over.id);
+    const reordered = arrayMove(lessons, oldIndex, newIndex).map((lesson, index) => ({ ...lesson, order_index: index }));
+    setLessons(reordered);
+
+    const supabase = createClient();
+    await Promise.all(reordered.map((lesson) => supabase.from('lessons').update({ order_index: lesson.order_index }).eq('id', lesson.id)));
+  };
+
   if (isLoading) {
     return (
       <main className="flex justify-center px-8 py-16">
@@ -110,38 +129,60 @@ export default function Page() {
         {lessons.length === 0 ? (
           <p className="text-slate-600 dark:text-slate-300">Aucune leçon pour ce module.</p>
         ) : (
-          lessons.map((lesson) => (
-            <Card key={lesson.id} className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-bold text-slate-900 dark:text-white">{lesson.title}</p>
-                  <Badge variant={lesson.is_published ? 'success' : 'warning'}>
-                    {lesson.is_published ? 'Publiée' : 'Brouillon'}
-                  </Badge>
-                  <Badge variant="default">{lesson.content_type.toUpperCase()}</Badge>
-                  <Badge variant={lesson.access_level === 'premium' ? 'destructive' : lesson.access_level === 'all' ? 'success' : 'default'}>
-                    {lesson.access_level === 'premium' ? 'Premium' : lesson.access_level === 'all' ? 'Tout le monde' : 'Gratuit'}
-                  </Badge>
-                </div>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {lesson.category ?? 'Sans catégorie'} — {lesson.difficulty} — ordre {lesson.order_index}
-                </p>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={lessons.map((lesson) => lesson.id)} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col gap-4">
+                {lessons.map((lesson) => (
+                  <SortableItem key={lesson.id} id={lesson.id}>
+                    {(dragHandleProps, isDragging) => (
+                      <Card className={`flex flex-wrap items-center justify-between gap-4 ${isDragging ? 'shadow-lg' : ''}`}>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            {...dragHandleProps}
+                            aria-label="Réordonner cette leçon"
+                            className="shrink-0 cursor-grab touch-none rounded p-1 text-slate-400 hover:text-slate-600 active:cursor-grabbing dark:text-slate-500 dark:hover:text-slate-300"
+                          >
+                            <GripVertical className="h-4 w-4" />
+                          </button>
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-bold text-slate-900 dark:text-white">{lesson.title}</p>
+                              <Badge variant={lesson.is_published ? 'success' : 'warning'}>
+                                {lesson.is_published ? 'Publiée' : 'Brouillon'}
+                              </Badge>
+                              <Badge variant="default">{lesson.content_type.toUpperCase()}</Badge>
+                              <Badge
+                                variant={lesson.access_level === 'premium' ? 'destructive' : lesson.access_level === 'all' ? 'success' : 'default'}
+                              >
+                                {lesson.access_level === 'premium' ? 'Premium' : lesson.access_level === 'all' ? 'Tout le monde' : 'Gratuit'}
+                              </Badge>
+                            </div>
+                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                              {lesson.category ?? 'Sans catégorie'} — {lesson.difficulty} — ordre {lesson.order_index}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Link href={`/admin/modules/${moduleId}/lecons/${lesson.id}`}>
+                            <Button variant="outline" size="sm">
+                              Questions
+                            </Button>
+                          </Link>
+                          <Button variant="outline" size="sm" onClick={() => openEdit(lesson)}>
+                            Éditer
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(lesson)}>
+                            Supprimer
+                          </Button>
+                        </div>
+                      </Card>
+                    )}
+                  </SortableItem>
+                ))}
               </div>
-              <div className="flex gap-2">
-                <Link href={`/admin/modules/${moduleId}/lecons/${lesson.id}`}>
-                  <Button variant="outline" size="sm">
-                    Questions
-                  </Button>
-                </Link>
-                <Button variant="outline" size="sm" onClick={() => openEdit(lesson)}>
-                  Éditer
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleDelete(lesson)}>
-                  Supprimer
-                </Button>
-              </div>
-            </Card>
-          ))
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 
