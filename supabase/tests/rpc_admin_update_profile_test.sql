@@ -8,7 +8,8 @@ SELECT plan(9);
 insert into auth.users (id, email) values
   ('c0000000-0000-0000-0000-000000000001', 'rpc-learner@anta.test'),
   ('c0000000-0000-0000-0000-000000000002', 'rpc-founder@anta.test'),
-  ('c0000000-0000-0000-0000-000000000003', 'rpc-developer@anta.test');
+  ('c0000000-0000-0000-0000-000000000003', 'rpc-developer@anta.test'),
+  ('c0000000-0000-0000-0000-000000000004', 'rpc-learner-2@anta.test');
 
 update public.profiles set role = 'founder' where id = 'c0000000-0000-0000-0000-000000000002';
 update public.profiles set role = 'developer' where id = 'c0000000-0000-0000-0000-000000000003';
@@ -67,10 +68,12 @@ select is(
 );
 
 -- 7) Un apprenant ne peut pas changer son propre plan d'abonnement.
-select set_config('request.jwt.claim.sub', 'c0000000-0000-0000-0000-000000000001', true);
+-- (Nouvel apprenant dédié : c...001 a été promu "instructor" au test 2, donc
+-- réutiliser son id ici testerait un instructeur, pas un apprenant.)
+select set_config('request.jwt.claim.sub', 'c0000000-0000-0000-0000-000000000004', true);
 set local role authenticated;
 select throws_ok(
-  $$ select public.admin_update_profile('c0000000-0000-0000-0000-000000000001', null, 'premium') $$,
+  $$ select public.admin_update_profile('c0000000-0000-0000-0000-000000000004', null, 'premium') $$,
   'P0001',
   'Accès réservé aux admins.',
   'Un apprenant ne peut pas changer un plan d''abonnement'

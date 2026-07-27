@@ -5,7 +5,11 @@
 BEGIN;
 SELECT plan(12);
 
--- Fixtures : un compte par rôle pertinent.
+-- Fixtures : un compte par rôle pertinent, la messagerie et l'historique des
+-- rôles. Tout est inséré ICI, avant tout changement de rôle Postgres, pour
+-- rester dans le contexte superuser (bypass RLS/grants) — un INSERT brut
+-- exécuté après un `set local role authenticated` hériterait des
+-- restrictions de ce rôle au lieu du contexte de départ.
 insert into auth.users (id, email) values
   ('a0000000-0000-0000-0000-000000000001', 'rls-learner@anta.test'),
   ('a0000000-0000-0000-0000-000000000002', 'rls-instructor@anta.test'),
@@ -15,6 +19,13 @@ insert into auth.users (id, email) values
 update public.profiles set role = 'instructor' where id = 'a0000000-0000-0000-0000-000000000002';
 update public.profiles set role = 'founder' where id = 'a0000000-0000-0000-0000-000000000003';
 update public.profiles set role = 'developer' where id = 'a0000000-0000-0000-0000-000000000004';
+
+insert into public.messages (id, author_id, content, created_at) values
+  ('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'Message récent', now()),
+  ('b0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000002', 'Message expiré', now() - interval '25 hours');
+
+insert into public.role_changes (user_id, previous_role, new_role, changed_by)
+values ('a0000000-0000-0000-0000-000000000001', 'user', 'instructor', 'a0000000-0000-0000-0000-000000000004');
 
 -- 1) Un apprenant ne peut pas créer de module.
 select set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', true);
@@ -78,11 +89,6 @@ select is(
   'Le rôle de l''apprenant reste "user" après la tentative bloquée'
 );
 
--- Fixtures messagerie : un message récent et un message vieux de 25h.
-insert into public.messages (id, author_id, content, created_at) values
-  ('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'Message récent', now()),
-  ('b0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000002', 'Message expiré', now() - interval '25 hours');
-
 -- 8) Un apprenant ne voit aucun message (pas admin).
 select set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', true);
 set local role authenticated;
@@ -107,10 +113,6 @@ select is(
   'Un instructeur ne voit que les messages de moins de 24h'
 );
 reset role;
-
--- Historique des rôles : réservé au développeur.
-insert into public.role_changes (user_id, previous_role, new_role, changed_by)
-values ('a0000000-0000-0000-0000-000000000001', 'user', 'instructor', 'a0000000-0000-0000-0000-000000000004');
 
 -- 11) Un instructeur ne peut pas lire l'historique des changements de rôle.
 select set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', true);
