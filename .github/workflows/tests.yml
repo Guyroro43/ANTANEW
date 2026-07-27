@@ -1,0 +1,35 @@
+name: Tests base de données (pgTAP)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+      - '.github/workflows/tests.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+      - '.github/workflows/tests.yml'
+
+jobs:
+  pgtap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Démarrer la stack Supabase locale (applique les migrations)
+        run: supabase start
+
+      - name: Lancer les tests pgTAP
+        run: supabase test db supabase/tests
+
+      - name: Arrêter la stack Supabase locale
+        if: always()
+        run: supabase stop
