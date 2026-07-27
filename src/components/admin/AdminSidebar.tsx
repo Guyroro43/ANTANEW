@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   Repeat,
+  MessageSquare,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -33,16 +34,19 @@ const linksByRole: Record<ActiveRole | 'developer', NavLink[]> = {
   instructor: [
     { href: '/admin/instructor', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/modules', label: 'Modules & Leçons', icon: BookOpen },
+    { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
   ],
   founder: [
     { href: '/admin/founder', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/utilisateurs', label: 'Utilisateurs', icon: Users },
+    { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
   ],
   developer: [
     { href: '/admin/developer', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/modules', label: 'Modules & Leçons', icon: BookOpen },
     { href: '/admin/utilisateurs', label: 'Utilisateurs', icon: Users },
     { href: '/admin/abonnements', label: 'Abonnements', icon: CreditCard },
+    { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
     { href: '/admin/parametres', label: 'Paramètres', icon: Settings },
   ],
 };

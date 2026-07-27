@@ -310,6 +310,30 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['role_changes']['Insert']>;
         Relationships: [];
       };
+      messages: {
+        Row: {
+          id: string;
+          author_id: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          author_id: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['messages']['Insert']>;
+        Relationships: [
+          {
+            foreignKeyName: 'messages_author_id_fkey';
+            columns: ['author_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       placement_questions: {
         Row: {
           id: string;
@@ -384,6 +408,10 @@ export interface Database {
           correct_count: number;
           total: number;
         }[];
+      };
+      purge_expired_messages: {
+        Args: Record<PropertyKey, never>;
+        Returns: void;
       };
     };
   };
