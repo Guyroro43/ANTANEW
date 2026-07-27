@@ -59,19 +59,60 @@ const TOGGLE_STORAGE_KEY = 'anta_admin_active_role';
 interface AdminSidebarProps {
   adminName: string;
   role: UserRole;
+  userId: string;
 }
 
-export function AdminSidebar({ adminName, role }: AdminSidebarProps) {
+function lastSeenMessagesKey(userId: string) {
+  return `anta_messages_last_seen_${userId}`;
+}
+
+export function AdminSidebar({ adminName, role, userId }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [activeRole, setActiveRole] = useState<ActiveRole>('founder');
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   const isFounderInstructor = role === 'founder_instructor';
 
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const lastSeen = window.localStorage.getItem(lastSeenMessagesKey(userId)) ?? new Date(0).toISOString();
+
+    const loadUnread = async () => {
+      const { count } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .neq('author_id', userId)
+        .gt('created_at', lastSeen);
+      setUnreadMessages(count ?? 0);
+    };
+    loadUnread();
+
+    const channel = supabase
+      .channel('admin-sidebar-messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        const row = payload.new as { author_id: string };
+        if (row.author_id !== userId) {
+          setUnreadMessages((prev) => prev + 1);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!pathname?.startsWith('/admin/messages')) return;
+    window.localStorage.setItem(lastSeenMessagesKey(userId), new Date().toISOString());
+    setUnreadMessages(0);
+  }, [pathname, userId]);
 
   useEffect(() => {
     if (!isFounderInstructor) return;
@@ -165,6 +206,7 @@ export function AdminSidebar({ adminName, role }: AdminSidebarProps) {
           {links.map((link) => {
             const isActive = pathname?.startsWith(link.href);
             const Icon = link.icon;
+            const isMessages = link.href === '/admin/messages';
             return (
               <Link
                 key={link.href}
@@ -178,6 +220,16 @@ export function AdminSidebar({ adminName, role }: AdminSidebarProps) {
               >
                 <Icon className="h-4 w-4" />
                 {link.label}
+                {isMessages && unreadMessages > 0 && (
+                  <span
+                    className={cn(
+                      'ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-bold',
+                      isActive ? 'bg-primary-foreground text-primary' : 'bg-red-600 text-white',
+                    )}
+                  >
+                    {unreadMessages > 9 ? '9+' : unreadMessages}
+                  </span>
+                )}
               </Link>
             );
           })}

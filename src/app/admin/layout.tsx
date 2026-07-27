@@ -23,7 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
-      <AdminSidebar adminName={profile.first_name} role={profile.role} />
+      <AdminSidebar adminName={profile.first_name} role={profile.role} userId={user.id} />
       <div className="flex-1 overflow-y-auto pt-16 md:pt-0">{children}</div>
     </div>
   );
