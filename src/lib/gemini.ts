@@ -498,3 +498,58 @@ ${QUESTION_VARIETY_CONSIGNES}
 
   return readJsonResponse<{ questions: GeneratedQuestion[] }>(response.text).questions;
 }
+
+export interface QuestionReview {
+  verdict: 'ok' | 'a_corriger';
+  comment: string;
+}
+
+interface ReviewQuestionParams {
+  lessonTitle: string;
+  questionText: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string | null;
+}
+
+/**
+ * Relecture IA d'une question générée automatiquement, pour aider
+ * l'instructeur humain à valider ou corriger plus vite (section
+ * "Évaluations" du dashboard instructeur).
+ */
+export async function reviewQuestion({
+  lessonTitle,
+  questionText,
+  options,
+  correctIndex,
+  explanation,
+}: ReviewQuestionParams): Promise<QuestionReview> {
+  const response = await getClient().models.generateContent({
+    model: MODEL,
+    contents: `Tu es relecteur pédagogique pour ANTA, une plateforme d'apprentissage de l'anglais pour de jeunes Africains (Côte d'Ivoire). Un instructeur doit valider ou corriger cette question de quiz générée par IA pour la leçon « ${lessonTitle} ».
+
+Question : ${questionText}
+Options : ${options.map((option, index) => `${index}) ${option}`).join(' ; ')}
+Réponse marquée correcte : ${correctIndex}) ${options[correctIndex] ?? ''}
+${explanation ? `Explication fournie : ${explanation}` : "Aucune explication fournie."}
+
+Vérifie que : la question est claire et sans ambiguïté, une seule option est réellement correcte, les mauvaises options ne sont pas trivialement fausses ou absurdes, il n'y a pas de faute d'anglais ou de français.
+
+Réponds avec :
+- "verdict" : "ok" si la question est correcte et publiable telle quelle, "a_corriger" sinon.
+- "comment" : une phrase en français expliquant ton verdict (si "a_corriger", précise le problème exact et comment le corriger).`,
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          verdict: { type: Type.STRING, enum: ['ok', 'a_corriger'] },
+          comment: { type: Type.STRING },
+        },
+        required: ['verdict', 'comment'],
+      },
+    },
+  });
+
+  return readJsonResponse<QuestionReview>(response.text);
+}

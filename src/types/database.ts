@@ -138,7 +138,15 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['questions']['Insert']>;
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'questions_lesson_id_fkey';
+            columns: ['lesson_id'];
+            isOneToOne: false;
+            referencedRelation: 'lessons';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       lesson_vocabulary: {
         Row: {
