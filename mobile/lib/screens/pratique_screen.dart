@@ -139,11 +139,10 @@ class _PratiqueScreenState extends State<PratiqueScreen> {
 
     setState(() => _avatarState = 'speaking');
     final persona = getPersona(_personaId);
-    final isMale = persona.gender == 'male';
 
     for (final segment in segments) {
       await _tts.setLanguage(segment.isFrench ? 'fr-FR' : 'en-US');
-      await _tts.setPitch(isMale ? 0.85 : 1.15);
+      await _tts.setPitch(persona.pitch);
       await _tts.setSpeechRate(0.48);
       try {
         await _tts.speak(segment.text);

@@ -50,6 +50,16 @@ declare global {
 
 const PERSONA_STORAGE_KEY = 'anta_pratique_persona';
 
+// Une seule voix système par langue est fréquente (Chrome/Windows) : le pitch
+// garantit que les 4 personnages restent distinguables même sans voix
+// distinctes disponibles sur l'appareil.
+const PERSONA_PITCH: Record<string, number> = {
+  kora: 1.15,
+  amara: 1.3,
+  kwame: 0.82,
+  sango: 0.65,
+};
+
 // Les voix du navigateur n'exposent pas de champ "genre" fiable — on repère
 // les voix courantes connues par plateforme, avec repli sur une répartition
 // simple si aucune ne correspond, pour que les 4 personnages restent
@@ -152,6 +162,8 @@ export function PracticeChat({ firstName }: PracticeChatProps) {
         const utterance = new SpeechSynthesisUtterance(segment.text);
         utterance.lang = segment.voice?.lang ?? (segment.lang === 'fr' ? 'fr-FR' : 'en-US');
         if (segment.voice) utterance.voice = segment.voice;
+        utterance.pitch = PERSONA_PITCH[personaId] ?? 1;
+        utterance.rate = 0.9;
         utterance.onend = () => playNext(index + 1);
         utterance.onerror = () => playNext(index + 1);
         window.speechSynthesis.speak(utterance);
