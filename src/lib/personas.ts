@@ -3,17 +3,17 @@ export interface Persona {
   name: string;
   gender: 'female' | 'male';
   avatar: string;
-  enVoice: string;
-  frVoice: string;
+  voiceId: string;
 }
 
-// Voix Neural2 de Google Cloud TTS, appariées anglais/français par genre pour
-// que chaque personnage garde un timbre cohérent selon la langue de la ligne.
+// Voix ElevenLabs (modèle eleven_multilingual_v2, une seule voix par
+// personnage pour l'anglais et le français) — voir la bibliothèque
+// ElevenLabs pour prévisualiser ou changer un voice_id.
 export const PERSONAS: Persona[] = [
-  { id: 'kora', name: 'Kora', gender: 'female', avatar: '/avatars/kora.png', enVoice: 'en-US-Neural2-F', frVoice: 'fr-FR-Neural2-A' },
-  { id: 'amara', name: 'Amara', gender: 'female', avatar: '/avatars/amara.png', enVoice: 'en-US-Neural2-C', frVoice: 'fr-FR-Neural2-C' },
-  { id: 'kwame', name: 'Kwame', gender: 'male', avatar: '/avatars/kwame.png', enVoice: 'en-US-Neural2-D', frVoice: 'fr-FR-Neural2-B' },
-  { id: 'sango', name: 'Sango', gender: 'male', avatar: '/avatars/sango.png', enVoice: 'en-US-Neural2-A', frVoice: 'fr-FR-Neural2-D' },
+  { id: 'kora', name: 'Kora', gender: 'female', avatar: '/avatars/kora.png', voiceId: 'cgSgspJ2msm6clMCkdW9' }, // Jessica
+  { id: 'amara', name: 'Amara', gender: 'female', avatar: '/avatars/amara.png', voiceId: 'Xb7hH8MSUJpSbSDYk0k2' }, // Alice
+  { id: 'kwame', name: 'Kwame', gender: 'male', avatar: '/avatars/kwame.png', voiceId: 'iP95p4xoKVk53GoZ742B' }, // Chris
+  { id: 'sango', name: 'Sango', gender: 'male', avatar: '/avatars/sango.png', voiceId: 'JBFqnCBsd6RMkjVDRZzb' }, // George
 ];
 
 export function getPersona(id: string): Persona {

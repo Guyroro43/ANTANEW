@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/lib/apiAuth';
-import { synthesizeSpeech } from '@/lib/googleTts';
+import { synthesizeSpeech } from '@/lib/elevenLabsTts';
 import { getPersona } from '@/lib/personas';
 
 const MAX_TEXT_LENGTH = 2000;

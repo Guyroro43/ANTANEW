@@ -1,8 +1,8 @@
 import 'dart:convert';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/api_config.dart';
@@ -16,30 +16,7 @@ class _ChatMessage {
   _ChatMessage({required this.role, required this.text});
 }
 
-class _SpeechSegment {
-  final String text;
-  final bool isFrench;
-
-  _SpeechSegment({required this.text, required this.isFrench});
-}
-
 const _personaStorageKey = 'anta_pratique_persona';
-
-List<_SpeechSegment> _splitIntoSpeechSegments(String text) {
-  return text
-      .split('\n')
-      .map((line) {
-        final isFrench = line.trim().startsWith('💡');
-        final cleaned = line
-            .replaceAll('💡', '')
-            .replaceAll(RegExp(r'[*_#`~]'), '')
-            .replaceAll(RegExp(r'\s+'), ' ')
-            .trim();
-        return _SpeechSegment(text: cleaned, isFrench: isFrench);
-      })
-      .where((segment) => segment.text.isNotEmpty)
-      .toList();
-}
 
 class PratiqueScreen extends StatefulWidget {
   const PratiqueScreen({super.key});
@@ -53,7 +30,7 @@ class _PratiqueScreenState extends State<PratiqueScreen> {
   final _scrollController = ScrollController();
   final List<_ChatMessage> _messages = [];
   final SpeechToText _speech = SpeechToText();
-  final FlutterTts _tts = FlutterTts();
+  final AudioPlayer _player = AudioPlayer();
 
   bool _isSending = false;
   bool _isRecording = false;
@@ -74,7 +51,6 @@ class _PratiqueScreenState extends State<PratiqueScreen> {
         text: "Hi $firstName! 👋 I'm Kora, your English practice partner. Tell me about your day, or ask me anything — let's chat!",
       ),
     );
-    _tts.awaitSpeakCompletion(true);
     _initSpeech();
     _loadPersona();
   }
@@ -118,7 +94,7 @@ class _PratiqueScreenState extends State<PratiqueScreen> {
     _controller.dispose();
     _scrollController.dispose();
     _speech.stop();
-    _tts.stop();
+    _player.dispose();
     super.dispose();
   }
 
@@ -134,23 +110,44 @@ class _PratiqueScreenState extends State<PratiqueScreen> {
   }
 
   Future<void> _playSpeech(String text) async {
-    final segments = _splitIntoSpeechSegments(text);
-    if (segments.isEmpty) return;
+    if (text.trim().isEmpty) return;
 
     setState(() => _avatarState = 'speaking');
-    final persona = getPersona(_personaId);
+    try {
+      final token = Supabase.instance.client.auth.currentSession?.accessToken;
+      final response = await http
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/api/pratique/tts'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'text': text, 'personaId': _personaId}),
+          )
+          .timeout(const Duration(seconds: 30));
 
-    for (final segment in segments) {
-      await _tts.setLanguage(segment.isFrench ? 'fr-FR' : 'en-US');
-      await _tts.setPitch(persona.pitch);
-      await _tts.setSpeechRate(0.48);
-      try {
-        await _tts.speak(segment.text);
-      } catch (_) {
-        // Bonus audio : on continue même si un segment échoue.
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode != 200) {
+        throw Exception(data['error'] ?? 'Échec de la synthèse vocale.');
       }
+
+      final segments = (data['segments'] as List? ?? [])
+          .cast<Map<String, dynamic>>();
+      for (final segment in segments) {
+        final base64Audio = segment['audioContentBase64'] as String?;
+        if (base64Audio == null) continue;
+        try {
+          await _player.play(BytesSource(base64Decode(base64Audio)));
+          await _player.onPlayerComplete.first;
+        } catch (_) {
+          // Un segment audio qui échoue ne doit pas bloquer la conversation.
+        }
+      }
+    } catch (_) {
+      // Silencieux : la synthèse vocale est un bonus, pas critique au chat.
+    } finally {
+      if (mounted) setState(() => _avatarState = 'idle');
     }
-    if (mounted) setState(() => _avatarState = 'idle');
   }
 
   Future<void> _sendMessage(String text, {required bool speak}) async {
