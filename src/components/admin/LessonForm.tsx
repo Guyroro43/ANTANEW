@@ -44,6 +44,7 @@ export function LessonForm({ initialValue, moduleTitle, onSubmit, onCancel }: Le
     source_pdf_path: initialValue?.source_pdf_path ?? '',
     image_url: initialValue?.image_url ?? '',
     access_level: initialValue?.access_level ?? 'free',
+    format: initialValue?.format ?? 'legacy',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -163,6 +164,7 @@ export function LessonForm({ initialValue, moduleTitle, onSubmit, onCancel }: Le
         source_pdf_path: values.source_pdf_path || null,
         image_url: values.image_url || null,
         access_level: values.access_level,
+        format: values.content_type === 'qcm' ? values.format : 'legacy',
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
@@ -295,6 +297,25 @@ export function LessonForm({ initialValue, moduleTitle, onSubmit, onCancel }: Le
           </select>
         </div>
       </div>
+
+      {values.content_type === 'qcm' && (
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+            Format de la leçon
+          </label>
+          <select
+            value={values.format}
+            onChange={(e) => setValues({ ...values, format: e.target.value as 'legacy' | 'blocks' })}
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-red-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
+            <option value="legacy">Classique (vocabulaire puis quiz)</option>
+            <option value="blocks">Blocs entrelacés (notion + QCM dans l&apos;ordre voulu)</option>
+          </select>
+          <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+            En blocs, le contenu (vocabulaire et questions) se gère depuis la page de la leçon après enregistrement.
+          </p>
+        </div>
+      )}
 
       {values.content_type !== 'qcm' && (
         <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">

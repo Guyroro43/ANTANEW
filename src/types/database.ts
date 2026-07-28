@@ -93,6 +93,7 @@ export interface Database {
           source_pdf_path: string | null;
           image_url: string | null;
           access_level: 'free' | 'premium' | 'all';
+          format: 'legacy' | 'blocks';
           created_at: string;
         };
         Insert: {
@@ -109,10 +110,43 @@ export interface Database {
           source_pdf_path?: string | null;
           image_url?: string | null;
           access_level?: 'free' | 'premium' | 'all';
+          format?: 'legacy' | 'blocks';
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['lessons']['Insert']>;
         Relationships: [];
+      };
+      lesson_blocks: {
+        Row: {
+          id: string;
+          lesson_id: string;
+          block_type: 'notion' | 'qcm';
+          order_index: number;
+          status: 'draft' | 'approved';
+          source: 'manual' | 'ai';
+          content: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lesson_id: string;
+          block_type: 'notion' | 'qcm';
+          order_index?: number;
+          status?: 'draft' | 'approved';
+          source?: 'manual' | 'ai';
+          content?: Json;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['lesson_blocks']['Insert']>;
+        Relationships: [
+          {
+            foreignKeyName: 'lesson_blocks_lesson_id_fkey';
+            columns: ['lesson_id'];
+            isOneToOne: false;
+            referencedRelation: 'lessons';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       questions: {
         Row: {

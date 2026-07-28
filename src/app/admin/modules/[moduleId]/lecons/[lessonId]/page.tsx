@@ -11,6 +11,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { QuestionForm } from '@/components/admin/QuestionForm';
 import { VocabularyForm } from '@/components/admin/VocabularyForm';
+import { LessonBlocksEditor } from '@/components/admin/LessonBlocksEditor';
 import { Icon, icons } from '@/components/ui/Icon';
 import type { Lesson, Question, QuestionInsert, VocabularyItem, VocabularyInsert } from '@/types/module';
 
@@ -166,6 +167,10 @@ export default function Page() {
         </p>
       </div>
 
+      {lesson.format === 'blocks' ? (
+        <LessonBlocksEditor lessonId={lessonId} />
+      ) : (
+        <>
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-2xl font-black text-slate-900 dark:text-white">Vocabulaire</h2>
         <Button variant="outline" onClick={openCreateVocab}>
@@ -346,6 +351,8 @@ export default function Page() {
           onCancel={() => setVocabModalOpen(false)}
         />
       </Modal>
+        </>
+      )}
     </main>
   );
 }

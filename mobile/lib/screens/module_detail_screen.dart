@@ -4,6 +4,7 @@ import '../config/app_theme.dart';
 import '../models/module_item.dart';
 import '../models/lesson_item.dart';
 import 'lecon_screen.dart';
+import 'lecon_blocks_screen.dart';
 
 const _contentTypeLabels = {
   'qcm': 'QCM',
@@ -101,12 +102,12 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
       );
       return;
     }
+    final alreadyCompleted = _completedLessonIds.contains(lesson.id);
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => LeconScreen(
-          lesson: lesson,
-          alreadyCompleted: _completedLessonIds.contains(lesson.id),
-        ),
+        builder: (_) => lesson.format == 'blocks'
+            ? LeconBlocksScreen(lesson: lesson, alreadyCompleted: alreadyCompleted)
+            : LeconScreen(lesson: lesson, alreadyCompleted: alreadyCompleted),
       ),
     );
     _load();

@@ -7,6 +7,7 @@ class LessonItem {
   final String? contentUrl;
   final String accessLevel;
   final int orderIndex;
+  final String format;
 
   LessonItem({
     required this.id,
@@ -17,6 +18,7 @@ class LessonItem {
     required this.contentUrl,
     required this.accessLevel,
     required this.orderIndex,
+    required this.format,
   });
 
   factory LessonItem.fromMap(Map<String, dynamic> map) {
@@ -29,6 +31,7 @@ class LessonItem {
       contentUrl: map['content_url'] as String?,
       accessLevel: (map['access_level'] as String?) ?? 'free',
       orderIndex: (map['order_index'] as num?)?.toInt() ?? 0,
+      format: (map['format'] as String?) ?? 'legacy',
     );
   }
 }

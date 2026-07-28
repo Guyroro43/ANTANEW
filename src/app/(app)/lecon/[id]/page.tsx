@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { LeconRunner } from '@/components/lecon/LeconRunner';
+import { LeconBlocksRunner } from '@/components/lecon/LeconBlocksRunner';
 import { Reveal } from '@/components/ui/Reveal';
 
 interface PageProps {
@@ -24,13 +25,28 @@ export default async function Page({ params }: PageProps) {
     redirect('/modules');
   }
 
-  const [{ data: moduleRow }, { data: profile }, { data: questions }, { data: progress }, { data: vocabulary }] = await Promise.all([
-    supabase.from('modules').select('slug, title').eq('id', lesson.module_id).single(),
-    supabase.from('profiles').select('subscription_plan').eq('id', user.id).single(),
-    supabase.from('questions').select('*').eq('lesson_id', params.id).order('order_index', { ascending: true }),
-    supabase.from('progress').select('completed').eq('user_id', user.id).eq('lesson_id', params.id).maybeSingle(),
-    supabase.from('lesson_vocabulary').select('*').eq('lesson_id', params.id).order('order_index', { ascending: true }),
-  ]);
+  const usesBlocks = lesson.format === 'blocks';
+
+  const [{ data: moduleRow }, { data: profile }, { data: questions }, { data: progress }, { data: vocabulary }, { data: blocks }] =
+    await Promise.all([
+      supabase.from('modules').select('slug, title').eq('id', lesson.module_id).single(),
+      supabase.from('profiles').select('subscription_plan').eq('id', user.id).single(),
+      usesBlocks
+        ? Promise.resolve({ data: [] })
+        : supabase.from('questions').select('*').eq('lesson_id', params.id).order('order_index', { ascending: true }),
+      supabase.from('progress').select('completed').eq('user_id', user.id).eq('lesson_id', params.id).maybeSingle(),
+      usesBlocks
+        ? Promise.resolve({ data: [] })
+        : supabase.from('lesson_vocabulary').select('*').eq('lesson_id', params.id).order('order_index', { ascending: true }),
+      usesBlocks
+        ? supabase
+            .from('lesson_blocks')
+            .select('*')
+            .eq('lesson_id', params.id)
+            .eq('status', 'approved')
+            .order('order_index', { ascending: true })
+        : Promise.resolve({ data: [] }),
+    ]);
 
   const isPremiumUser = profile?.subscription_plan === 'premium';
   if (lesson.access_level === 'premium' && !isPremiumUser) {
@@ -68,15 +84,19 @@ export default async function Page({ params }: PageProps) {
         </Reveal>
 
         <div className="mt-8">
-          <LeconRunner
-            lessonId={lesson.id}
-            moduleSlug={moduleSlug}
-            contentType={lesson.content_type}
-            contentUrl={contentUrl}
-            questions={questions ?? []}
-            vocabulary={vocabulary ?? []}
-            alreadyCompleted={Boolean(progress?.completed)}
-          />
+          {usesBlocks ? (
+            <LeconBlocksRunner lessonId={lesson.id} moduleSlug={moduleSlug} blocks={blocks ?? []} />
+          ) : (
+            <LeconRunner
+              lessonId={lesson.id}
+              moduleSlug={moduleSlug}
+              contentType={lesson.content_type}
+              contentUrl={contentUrl}
+              questions={questions ?? []}
+              vocabulary={vocabulary ?? []}
+              alreadyCompleted={Boolean(progress?.completed)}
+            />
+          )}
         </div>
       </div>
     </main>

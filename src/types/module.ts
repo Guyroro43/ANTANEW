@@ -16,6 +16,27 @@ export type VocabularyItem = Database['public']['Tables']['lesson_vocabulary']['
 export type VocabularyInsert = Database['public']['Tables']['lesson_vocabulary']['Insert'];
 export type VocabularyUpdate = Database['public']['Tables']['lesson_vocabulary']['Update'];
 
+export type BlockType = 'notion' | 'qcm';
+
+export type LessonBlock = Database['public']['Tables']['lesson_blocks']['Row'];
+export type LessonBlockInsert = Database['public']['Tables']['lesson_blocks']['Insert'];
+export type LessonBlockUpdate = Database['public']['Tables']['lesson_blocks']['Update'];
+
+export interface NotionBlockContent {
+  title: string;
+  body: string;
+  example?: string;
+  audio_url?: string;
+  image_url?: string;
+}
+
+export interface QcmBlockContent {
+  question_text: string;
+  options: string[];
+  correct_index: number;
+  explanation?: string;
+}
+
 export interface ModuleWithLessons extends Module {
   lessons: Lesson[];
 }

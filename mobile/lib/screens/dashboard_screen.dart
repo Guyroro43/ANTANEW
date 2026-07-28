@@ -11,6 +11,7 @@ import '../models/lesson_item.dart';
 import '../widgets/welcome_back_sheet.dart';
 import 'app_shell.dart';
 import 'lecon_screen.dart';
+import 'lecon_blocks_screen.dart';
 
 const _weekdayLabels = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 const _minCompletedLessonsForInsights = 3;
@@ -245,7 +246,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _openLesson(LessonItem lesson) async {
     await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => LeconScreen(lesson: lesson, alreadyCompleted: false)),
+      MaterialPageRoute(
+        builder: (_) => lesson.format == 'blocks'
+            ? LeconBlocksScreen(lesson: lesson, alreadyCompleted: false)
+            : LeconScreen(lesson: lesson, alreadyCompleted: false),
+      ),
     );
     _load();
   }
