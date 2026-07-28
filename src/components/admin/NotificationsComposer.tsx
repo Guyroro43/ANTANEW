@@ -24,7 +24,8 @@ interface HistoryRow {
   id: string;
   title: string;
   body: string;
-  target: 'all' | 'selected';
+  target: 'all' | 'selected' | 'plan';
+  target_plan?: 'starter' | 'premium' | null;
   recipient_count: number;
   sent_count: number;
   failed_count: number;
@@ -193,8 +194,14 @@ export function NotificationsComposer({ users, initialHistory }: NotificationsCo
               <div key={h.id} className="rounded-xl border border-border p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-bold text-foreground">{h.title}</p>
-                  <Badge variant={h.target === 'all' ? 'default' : 'success'}>
-                    {h.target === 'all' ? 'Tous' : 'Sélection'}
+                  <Badge variant={h.target === 'all' ? 'default' : h.target === 'plan' ? 'warning' : 'success'}>
+                    {h.target === 'all'
+                      ? 'Tous'
+                      : h.target === 'plan'
+                        ? h.target_plan === 'premium'
+                          ? 'Premium'
+                          : 'Gratuit'
+                        : 'Sélection'}
                   </Badge>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">{h.body}</p>

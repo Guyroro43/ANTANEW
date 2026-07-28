@@ -24,14 +24,18 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const title = typeof body?.title === 'string' ? body.title.trim() : '';
   const messageBody = typeof body?.body === 'string' ? body.body.trim() : '';
-  const target = body?.target === 'selected' ? 'selected' : 'all';
+  const target = body?.target === 'selected' ? 'selected' : body?.target === 'plan' ? 'plan' : 'all';
   const userIds: string[] = target === 'selected' && Array.isArray(body?.userIds) ? body.userIds : [];
+  const plan = body?.plan === 'premium' ? 'premium' : body?.plan === 'starter' ? 'starter' : null;
 
   if (!title || !messageBody) {
     return NextResponse.json({ error: 'Titre et message requis.' }, { status: 400 });
   }
   if (target === 'selected' && userIds.length === 0) {
     return NextResponse.json({ error: 'Sélectionne au moins un destinataire.' }, { status: 400 });
+  }
+  if (target === 'plan' && !plan) {
+    return NextResponse.json({ error: 'Plan cible manquant.' }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -40,10 +44,12 @@ export async function POST(request: Request) {
   // (profiles.notifications_enabled, réglable dans Paramètres).
   let tokenQuery = admin
     .from('device_tokens')
-    .select('id, token, user_id, profiles!inner(notifications_enabled)')
+    .select('id, token, user_id, profiles!inner(notifications_enabled, subscription_plan)')
     .eq('profiles.notifications_enabled', true);
   if (target === 'selected') {
     tokenQuery = tokenQuery.in('user_id', userIds);
+  } else if (target === 'plan' && plan) {
+    tokenQuery = tokenQuery.eq('profiles.subscription_plan', plan);
   }
   const { data: deviceTokens, error: tokensError } = await tokenQuery;
   if (tokensError) {
@@ -51,7 +57,9 @@ export async function POST(request: Request) {
   }
 
   const recipientCount =
-    target === 'selected' ? userIds.length : new Set((deviceTokens ?? []).map((t) => t.user_id)).size;
+    target === 'all' ? new Set((deviceTokens ?? []).map((t) => t.user_id)).size
+    : target === 'plan' ? new Set((deviceTokens ?? []).map((t) => t.user_id)).size
+    : userIds.length;
 
   const tokens = (deviceTokens ?? []).map((t) => t.token);
   let sentCount = 0;
@@ -88,6 +96,7 @@ export async function POST(request: Request) {
     title,
     body: messageBody,
     target,
+    target_plan: target === 'plan' ? plan : null,
     recipient_count: recipientCount,
     sent_count: sentCount,
     failed_count: failedCount,

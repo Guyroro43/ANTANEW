@@ -380,7 +380,8 @@ export interface Database {
           sender_id: string | null;
           title: string;
           body: string;
-          target: 'all' | 'selected';
+          target: 'all' | 'selected' | 'plan';
+          target_plan: 'starter' | 'premium' | null;
           recipient_count: number;
           sent_count: number;
           failed_count: number;
@@ -391,7 +392,8 @@ export interface Database {
           sender_id?: string | null;
           title: string;
           body: string;
-          target: 'all' | 'selected';
+          target: 'all' | 'selected' | 'plan';
+          target_plan?: 'starter' | 'premium' | null;
           recipient_count?: number;
           sent_count?: number;
           failed_count?: number;

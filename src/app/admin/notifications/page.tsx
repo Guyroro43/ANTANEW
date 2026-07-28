@@ -8,7 +8,7 @@ export default async function Page() {
     supabase.from('profiles').select('id, first_name, email').order('first_name'),
     supabase
       .from('notification_broadcasts')
-      .select('id, title, body, target, recipient_count, sent_count, failed_count, created_at')
+      .select('id, title, body, target, target_plan, recipient_count, sent_count, failed_count, created_at')
       .order('created_at', { ascending: false })
       .limit(20),
   ]);
