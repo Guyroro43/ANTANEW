@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const lessonId = body?.lessonId as string | undefined;
   const source = body?.source === 'pdf' ? 'pdf' : body?.source === 'media' ? 'media' : 'text';
-  const count = Math.min(Math.max(Number(body?.count) || 5, 1), 10);
+  const count = Math.min(Math.max(Number(body?.count) || 5, 1), 15);
   const vocabCount = Math.min(Math.max(Number(body?.vocabCount) || 5, 0), 8);
 
   if (!lessonId) {

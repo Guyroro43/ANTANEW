@@ -26,6 +26,7 @@ export default function Page() {
   const [editingVocab, setEditingVocab] = useState<VocabularyItem | null>(null);
   const [isGenerating, setIsGenerating] = useState<'text' | 'pdf' | 'media' | null>(null);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [questionCount, setQuestionCount] = useState(5);
 
   const loadData = async () => {
     const supabase = createClient();
@@ -88,7 +89,7 @@ export default function Page() {
       const response = await fetch('/api/admin/questions/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lessonId, count: 5, source }),
+        body: JSON.stringify({ lessonId, count: questionCount, source }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -198,7 +199,20 @@ export default function Page() {
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-8 dark:border-slate-800">
         <h2 className="text-2xl font-black text-slate-900 dark:text-white">Questions</h2>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {(lesson.content_type === 'qcm' || lesson.content_type === 'video' || lesson.content_type === 'audio') && (
+            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+              Nombre de questions
+              <input
+                type="number"
+                min={1}
+                max={15}
+                value={questionCount}
+                onChange={(e) => setQuestionCount(Math.min(15, Math.max(1, Number(e.target.value) || 1)))}
+                className="w-16 rounded-lg border border-slate-300 bg-transparent px-2 py-1 text-center dark:border-slate-700"
+              />
+            </label>
+          )}
           {lesson.content_type === 'qcm' && (
             <>
               <Button variant="outline" onClick={() => handleGenerate('text')} disabled={isGenerating !== null}>
