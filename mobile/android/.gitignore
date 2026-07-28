@@ -12,3 +12,9 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Exception : keystore de DEBUG uniquement (mot de passe/alias par défaut
+# Android, jamais utilisé pour signer une release Play Store), committé pour
+# garder une empreinte SHA-1 stable entre les machines et la CI (nécessaire
+# pour Google Sign-In). Ne jamais faire ça pour un vrai keystore de release.
+!debug.keystore

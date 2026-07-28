@@ -36,6 +36,20 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // Keystore de debug committé au repo (pas un secret — mot de
+            // passe/alias par défaut Android) pour que l'empreinte SHA-1 soit
+            // identique en local et en CI. Sans ça, chaque machine/CI génère
+            // son propre keystore éphémère, et Google Sign-In (qui valide le
+            // SHA-1 de l'app) casse à chaque réinstallation de Flutter.
+            storeFile = file("../debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
