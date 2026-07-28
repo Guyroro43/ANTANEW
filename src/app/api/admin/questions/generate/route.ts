@@ -41,6 +41,7 @@ export async function POST(request: Request) {
   const source = body?.source === 'pdf' ? 'pdf' : body?.source === 'media' ? 'media' : 'text';
   const count = Math.min(Math.max(Number(body?.count) || 5, 1), 15);
   const vocabCount = Math.min(Math.max(Number(body?.vocabCount) || 5, 0), 8);
+  const directionSheet = typeof body?.directionSheet === 'string' ? body.directionSheet.trim().slice(0, 2000) || null : null;
 
   if (!lessonId) {
     return NextResponse.json({ error: 'lessonId manquant.' }, { status: 400 });
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
         difficulty: lesson.difficulty,
         count,
         vocabCount,
+        directionSheet,
       });
     } else if (source === 'media') {
       if (!lesson.content_url || (lesson.content_type !== 'video' && lesson.content_type !== 'audio')) {
@@ -95,6 +97,7 @@ export async function POST(request: Request) {
         category: lesson.category,
         difficulty: lesson.difficulty,
         count,
+        directionSheet,
       });
       generated = { questions, vocabulary: [] };
     } else {
@@ -107,6 +110,7 @@ export async function POST(request: Request) {
         difficulty: lesson.difficulty,
         count,
         vocabCount,
+        directionSheet,
       });
     }
   } catch (err) {

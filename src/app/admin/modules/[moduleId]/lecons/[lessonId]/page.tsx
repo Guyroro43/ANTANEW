@@ -27,6 +27,8 @@ export default function Page() {
   const [isGenerating, setIsGenerating] = useState<'text' | 'pdf' | 'media' | null>(null);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [questionCount, setQuestionCount] = useState(5);
+  const [directionSheet, setDirectionSheet] = useState('');
+  const [showDirectionSheet, setShowDirectionSheet] = useState(false);
 
   const loadData = async () => {
     const supabase = createClient();
@@ -89,7 +91,7 @@ export default function Page() {
       const response = await fetch('/api/admin/questions/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lessonId, count: questionCount, source }),
+        body: JSON.stringify({ lessonId, count: questionCount, source, directionSheet }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -199,8 +201,15 @@ export default function Page() {
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-8 dark:border-slate-800">
         <h2 className="text-2xl font-black text-slate-900 dark:text-white">Questions</h2>
-        <div className="flex flex-wrap items-center gap-2">
-          {(lesson.content_type === 'qcm' || lesson.content_type === 'video' || lesson.content_type === 'audio') && (
+        <Button onClick={openCreate}>
+          <Icon icon={icons.plus} className="h-4 w-4" />
+          Nouvelle question
+        </Button>
+      </div>
+
+      {(lesson.content_type === 'qcm' || lesson.content_type === 'video' || lesson.content_type === 'audio') && (
+        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+          <div className="flex flex-wrap items-center gap-4">
             <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
               Nombre de questions
               <input
@@ -212,7 +221,30 @@ export default function Page() {
                 className="w-16 rounded-lg border border-slate-300 bg-transparent px-2 py-1 text-center dark:border-slate-700"
               />
             </label>
+            <button
+              type="button"
+              onClick={() => setShowDirectionSheet((v) => !v)}
+              className="text-sm font-semibold text-red-600 hover:underline dark:text-yellow-400"
+            >
+              {showDirectionSheet ? 'Masquer' : 'Ajouter'} une fiche de direction (optionnel)
+            </button>
+          </div>
+          {showDirectionSheet && (
+            <div>
+              <textarea
+                value={directionSheet}
+                onChange={(e) => setDirectionSheet(e.target.value)}
+                placeholder="Consignes précises pour l'IA : objectifs pédagogiques, points à couvrir absolument, ton, exemples à privilégier ou à éviter, niveau de difficulté visé…"
+                rows={4}
+                maxLength={2000}
+                className="w-full rounded-xl border border-slate-300 bg-transparent p-3 text-sm dark:border-slate-700"
+              />
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Ces consignes priment sur la génération par défaut. Laisse vide pour une génération standard.
+              </p>
+            </div>
           )}
+          <div className="flex flex-wrap gap-2">
           {lesson.content_type === 'qcm' && (
             <>
               <Button variant="outline" onClick={() => handleGenerate('text')} disabled={isGenerating !== null}>
@@ -245,12 +277,9 @@ export default function Page() {
               )}
             </>
           )}
-          <Button onClick={openCreate}>
-            <Icon icon={icons.plus} className="h-4 w-4" />
-            Nouvelle question
-          </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {generateError && (
         <p className="mt-4 text-sm font-medium text-red-600 dark:text-red-400">{generateError}</p>

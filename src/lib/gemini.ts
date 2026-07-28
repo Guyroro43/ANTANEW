@@ -78,6 +78,12 @@ const QUESTION_VARIETY_CONSIGNES = `- Les questions ne doivent PAS être un simp
 - Certaines questions peuvent dépasser légèrement le vocabulaire présenté (grammaire liée, usage courant) pour éviter un simple test de reconnaissance.
 - Les 3 mauvaises options doivent être plausibles, pas absurdes : mélange un piège de sens proche, un piège de forme proche (orthographe ou sonorité similaire, ex. faux-ami), et une option liée au thème mais incorrecte. Évite les options qui se devinent trivialement par élimination.`;
 
+function directionSheetBlock(directionSheet: string | null | undefined) {
+  return directionSheet?.trim()
+    ? `\nFiche de direction de l'instructeur (à respecter en priorité, prime sur les consignes générales ci-dessous en cas de conflit) :\n${directionSheet.trim()}\n`
+    : '';
+}
+
 interface GenerateLessonContentParams {
   moduleTitle: string;
   lessonTitle: string;
@@ -86,6 +92,7 @@ interface GenerateLessonContentParams {
   difficulty: string | null;
   count: number;
   vocabCount: number;
+  directionSheet?: string | null;
 }
 
 export async function generateLessonContent({
@@ -96,6 +103,7 @@ export async function generateLessonContent({
   difficulty,
   count,
   vocabCount,
+  directionSheet,
 }: GenerateLessonContentParams): Promise<GeneratedLessonContent> {
   const response = await getClient().models.generateContent({
     model: MODEL,
@@ -108,7 +116,7 @@ Leçon : ${lessonTitle}
 ${lessonDescription ? `Description : ${lessonDescription}` : ''}
 ${category ? `Catégorie : ${category}` : ''}
 Niveau : ${difficulty ?? 'debutant'}
-
+${directionSheetBlock(directionSheet)}
 Génère exactement ${vocabCount} mots de vocabulaire et exactement ${count} questions.
 
 Consignes :
@@ -133,6 +141,7 @@ interface GenerateLessonContentFromPdfParams {
   difficulty: string | null;
   count: number;
   vocabCount: number;
+  directionSheet?: string | null;
 }
 
 export async function generateLessonContentFromPdf({
@@ -142,6 +151,7 @@ export async function generateLessonContentFromPdf({
   difficulty,
   count,
   vocabCount,
+  directionSheet,
 }: GenerateLessonContentFromPdfParams): Promise<GeneratedLessonContent> {
   const pdfResponse = await fetch(pdfUrl);
   if (!pdfResponse.ok) {
@@ -164,7 +174,7 @@ Analyse le contenu de ce document PDF, qui sert de support à la leçon suivante
 Leçon : ${lessonTitle}
 ${category ? `Catégorie : ${category}` : ''}
 Niveau : ${difficulty ?? 'debutant'}
-
+${directionSheetBlock(directionSheet)}
 Génère exactement ${vocabCount} mots de vocabulaire et exactement ${count} questions, basés uniquement sur le contenu réel du document (pas sur des connaissances générales).
 
 Consignes :
@@ -420,6 +430,7 @@ interface GenerateQuestionsFromMediaParams {
   category: string | null;
   difficulty: string | null;
   count: number;
+  directionSheet?: string | null;
 }
 
 /**
@@ -435,6 +446,7 @@ export async function generateQuestionsFromMedia({
   category,
   difficulty,
   count,
+  directionSheet,
 }: GenerateQuestionsFromMediaParams): Promise<GeneratedQuestion[]> {
   const mediaResponse = await fetch(mediaUrl);
   if (!mediaResponse.ok) {
@@ -478,7 +490,7 @@ Regarde/écoute ce fichier ${mediaKind}, qui sert de support à la leçon suivan
 Leçon : ${lessonTitle}
 ${category ? `Catégorie : ${category}` : ''}
 Niveau : ${difficulty ?? 'debutant'}
-
+${directionSheetBlock(directionSheet)}
 L'apprenant consulte directement ce ${mediaKind} dans l'app — génère uniquement des questions pour vérifier sa compréhension, exactement ${count} questions, basées uniquement sur le contenu réel du ${mediaKind} (pas sur des connaissances générales).
 
 Consignes :
