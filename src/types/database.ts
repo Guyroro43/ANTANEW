@@ -181,6 +181,7 @@ export interface Database {
           lesson_id: string;
           completed: boolean;
           score: number;
+          max_score: number | null;
           completed_at: string | null;
           created_at: string;
         };
@@ -190,6 +191,7 @@ export interface Database {
           lesson_id: string;
           completed?: boolean;
           score?: number;
+          max_score?: number | null;
           completed_at?: string | null;
           created_at?: string;
         };
@@ -447,7 +449,7 @@ export interface Database {
         Returns: number | null;
       };
       complete_lesson: {
-        Args: { p_lesson_id: string; p_score?: number | null };
+        Args: { p_lesson_id: string; p_score?: number | null; p_max_score?: number | null };
         Returns: {
           xp_earned: number;
           total_xp: number;

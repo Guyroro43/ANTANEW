@@ -7,7 +7,7 @@ import { WelcomeBackModal } from '@/components/dashboard/WelcomeBackModal';
 import { getHomePathForRole, isAdminRole } from '@/lib/roleRouting';
 import { getOrGenerateProgressSummary, getCategoryStats, MIN_COMPLETED_LESSONS } from '@/lib/progressSummary';
 
-const WEAK_CATEGORY_THRESHOLD = 3.5;
+const WEAK_CATEGORY_THRESHOLD_PERCENT = 70;
 
 const shortcuts = [
   { href: '/modules', label: 'Modules', icon: icons.module },
@@ -105,8 +105,8 @@ export default async function Page() {
   const { completedCount, categoryStats } = await getCategoryStats(supabase, user.id);
   if (completedCount >= MIN_COMPLETED_LESSONS) {
     const weakestCategory = categoryStats
-      .filter((c) => c.avgScore < WEAK_CATEGORY_THRESHOLD)
-      .sort((a, b) => a.avgScore - b.avgScore)[0];
+      .filter((c) => c.avgScorePercent < WEAK_CATEGORY_THRESHOLD_PERCENT)
+      .sort((a, b) => a.avgScorePercent - b.avgScorePercent)[0];
 
     if (weakestCategory) {
       const reinforcementLesson = availableLessons.find((lesson) => lesson.category === weakestCategory.category);

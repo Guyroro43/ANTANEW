@@ -7,7 +7,7 @@ export const MIN_COMPLETED_LESSONS = 3;
 
 export interface CategoryStat {
   category: string;
-  avgScore: number;
+  avgScorePercent: number;
   lessonsCompleted: number;
 }
 
@@ -17,25 +17,29 @@ export async function getCategoryStats(
 ): Promise<{ completedCount: number; categoryStats: CategoryStat[] }> {
   const { data: rows } = await supabase
     .from('progress')
-    .select('score, lessons(category)')
+    .select('score, max_score, lessons(category)')
     .eq('user_id', userId)
     .eq('completed', true);
 
   const completedCount = rows?.length ?? 0;
 
-  const statsByCategory = new Map<string, { total: number; count: number }>();
+  const statsByCategory = new Map<string, { totalPercent: number; count: number }>();
   for (const row of rows ?? []) {
     const lessonRelation = row.lessons as unknown as { category: string | null } | { category: string | null }[] | null;
     const category = (Array.isArray(lessonRelation) ? lessonRelation[0]?.category : lessonRelation?.category) ?? 'Général';
-    const entry = statsByCategory.get(category) ?? { total: 0, count: 0 };
-    entry.total += row.score ?? 0;
+    // Les lignes d'avant la migration 022 n'ont pas de max_score : leur score
+    // était déjà normalisé sur 5 côté client, donc /5 reste correct pour elles.
+    const max = row.max_score ?? 5;
+    const percent = max > 0 ? ((row.score ?? 0) / max) * 100 : 100;
+    const entry = statsByCategory.get(category) ?? { totalPercent: 0, count: 0 };
+    entry.totalPercent += percent;
     entry.count += 1;
     statsByCategory.set(category, entry);
   }
 
-  const categoryStats = Array.from(statsByCategory.entries()).map(([category, { total, count }]) => ({
+  const categoryStats = Array.from(statsByCategory.entries()).map(([category, { totalPercent, count }]) => ({
     category,
-    avgScore: Math.round((total / count) * 10) / 10,
+    avgScorePercent: Math.round(totalPercent / count),
     lessonsCompleted: count,
   }));
 

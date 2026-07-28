@@ -105,13 +105,13 @@ export function LeconRunner({
     return mistakes;
   };
 
-  const finishLesson = async (score: number | null, finalAnswers: SubmittedAnswer[]) => {
+  const finishLesson = async (score: number | null, maxScore: number | null, finalAnswers: SubmittedAnswer[]) => {
     setIsSubmitting(true);
     setError(null);
     try {
       const supabase = createClient();
       const [{ data, error: rpcError }, feedbackResponse] = await Promise.all([
-        supabase.rpc('complete_lesson', { p_lesson_id: lessonId, p_score: score }),
+        supabase.rpc('complete_lesson', { p_lesson_id: lessonId, p_score: score, p_max_score: maxScore }),
         finalAnswers.length > 0
           ? fetch('/api/lecons/feedback', {
               method: 'POST',
@@ -155,8 +155,7 @@ export function LeconRunner({
       const question = questions.find((q) => q.id === answer.questionId);
       return question && answer.selectedIndex === question.correct_index;
     }).length;
-    const score = Math.round((finalCorrectCount / questions.length) * 5);
-    finishLesson(score, finalAnswers);
+    finishLesson(finalCorrectCount, questions.length, finalAnswers);
   };
 
   const handleVocabNext = () => {
@@ -272,7 +271,7 @@ export function LeconRunner({
             )}
 
             {!hasQuestions && contentType !== 'qcm' && (
-              <Button onClick={() => finishLesson(null, [])} disabled={isSubmitting}>
+              <Button onClick={() => finishLesson(null, null, [])} disabled={isSubmitting}>
                 <Icon icon={icons.check} className="h-4 w-4" />
                 {isSubmitting ? 'Enregistrement…' : alreadyCompleted ? 'Revalider comme terminée' : 'Marquer comme terminée'}
               </Button>

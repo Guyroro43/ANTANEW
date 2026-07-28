@@ -185,8 +185,7 @@ class _LeconScreenState extends State<LeconScreen> {
       return answer.selectedIndex == question.correctIndex;
     }).length;
     _finalScore = correctCount;
-    final score = (correctCount / _questions.length * 5).round();
-    _finishLesson(score, finalAnswers);
+    _finishLesson(correctCount, _questions.length, finalAnswers);
   }
 
   List<_Mistake> _buildMistakes(List<_SubmittedAnswer> finalAnswers) {
@@ -212,6 +211,7 @@ class _LeconScreenState extends State<LeconScreen> {
 
   Future<void> _finishLesson(
     int? score,
+    int? maxScore,
     List<_SubmittedAnswer> finalAnswers,
   ) async {
     setState(() {
@@ -221,7 +221,11 @@ class _LeconScreenState extends State<LeconScreen> {
     try {
       final response = await Supabase.instance.client.rpc(
         'complete_lesson',
-        params: {'p_lesson_id': widget.lesson.id, 'p_score': score},
+        params: {
+          'p_lesson_id': widget.lesson.id,
+          'p_score': score,
+          'p_max_score': maxScore,
+        },
       );
       final data = response as Map<String, dynamic>?;
       _ticker?.cancel();
@@ -420,7 +424,7 @@ class _LeconScreenState extends State<LeconScreen> {
         const Text("Cette leçon n'a pas encore de questions."),
       if (widget.lesson.contentType != 'qcm') ...[
         ElevatedButton(
-          onPressed: _isSubmitting ? null : () => _finishLesson(null, []),
+          onPressed: _isSubmitting ? null : () => _finishLesson(null, null, []),
           child: Text(
             _isSubmitting
                 ? 'Enregistrement…'

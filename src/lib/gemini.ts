@@ -332,7 +332,7 @@ Rédige :
 
 interface CategoryStat {
   category: string;
-  avgScore: number;
+  avgScorePercent: number;
   lessonsCompleted: number;
 }
 
@@ -358,8 +358,8 @@ export async function summarizeProgress({
 Voici les statistiques réelles de progression de ${firstName} (niveau ${level}) :
 - ${completedLessonsCount} leçon(s) complétée(s) au total.
 - Streak actuel : ${currentStreak} jour(s).
-- Score moyen par catégorie de leçon (sur 5) :
-${categoryStats.map((c) => `  - ${c.category} : ${c.avgScore}/5 sur ${c.lessonsCompleted} leçon(s)`).join('\n')}
+- Score moyen par catégorie de leçon :
+${categoryStats.map((c) => `  - ${c.category} : ${c.avgScorePercent}% sur ${c.lessonsCompleted} leçon(s)`).join('\n')}
 
 Rédige un court message d'encouragement personnalisé (1 à 2 phrases, en français, ton chaleureux et motivant) qui :
 - félicite la catégorie où le score moyen est le plus élevé,

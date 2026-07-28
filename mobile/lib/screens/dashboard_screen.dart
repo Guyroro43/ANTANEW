@@ -14,7 +14,7 @@ import 'lecon_screen.dart';
 
 const _weekdayLabels = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 const _minCompletedLessonsForInsights = 3;
-const _weakCategoryThreshold = 3.5;
+const _weakCategoryThresholdPercent = 70;
 
 class _DayInfo {
   final String label;
@@ -82,7 +82,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               .order('order_index');
       final progressRows = await supabase
           .from('progress')
-          .select('lesson_id, completed, completed_at, score')
+          .select('lesson_id, completed, completed_at, score, max_score')
           .eq('user_id', userId);
 
       final completedLessonIds = (progressRows as List)
@@ -128,18 +128,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       final completedRows = progressRows.where((row) => row['completed'] == true).toList();
       if (completedRows.length >= _minCompletedLessonsForInsights) {
-        final statsByCategory = <String, List<num>>{};
+        final statsByCategory = <String, List<double>>{};
         for (final row in completedRows) {
           final lesson = lessonsById[row['lesson_id'] as String];
           final category = (lesson?['category'] as String?) ?? 'Général';
-          statsByCategory.putIfAbsent(category, () => []).add((row['score'] as num?) ?? 0);
+          // Les lignes d'avant la migration 022 n'ont pas de max_score : leur
+          // score était déjà normalisé sur 5 côté client, donc /5 reste correct.
+          final max = (row['max_score'] as num?)?.toDouble() ?? 5;
+          final score = (row['score'] as num?)?.toDouble() ?? 0;
+          final percent = max > 0 ? (score / max) * 100 : 100.0;
+          statsByCategory.putIfAbsent(category, () => []).add(percent);
         }
         String? weakestCategory;
         var lowestAvg = double.infinity;
-        statsByCategory.forEach((category, scores) {
-          final avg = scores.reduce((a, b) => a + b) / scores.length;
-          if (avg < _weakCategoryThreshold && avg < lowestAvg) {
-            lowestAvg = avg.toDouble();
+        statsByCategory.forEach((category, percents) {
+          final avg = percents.reduce((a, b) => a + b) / percents.length;
+          if (avg < _weakCategoryThresholdPercent && avg < lowestAvg) {
+            lowestAvg = avg;
             weakestCategory = category;
           }
         });
