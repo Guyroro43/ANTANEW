@@ -42,11 +42,13 @@ export function LessonForm({ initialValue, moduleTitle, onSubmit, onCancel }: Le
     content_type: initialValue?.content_type ?? 'qcm',
     content_url: initialValue?.content_url ?? '',
     source_pdf_path: initialValue?.source_pdf_path ?? '',
+    image_url: initialValue?.image_url ?? '',
     access_level: initialValue?.access_level ?? 'free',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleDraft = async () => {
@@ -112,6 +114,27 @@ export function LessonForm({ initialValue, moduleTitle, onSubmit, onCancel }: Le
     }
   };
 
+  const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const path = `lessons/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage.from('lesson-media').upload(path, file);
+      if (uploadError) throw new Error(uploadError.message);
+
+      const { data } = supabase.storage.from('lesson-media').getPublicUrl(path);
+      setValues((prev) => ({ ...prev, image_url: data.publicUrl }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Échec de l'upload de l'image.");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
@@ -138,6 +161,7 @@ export function LessonForm({ initialValue, moduleTitle, onSubmit, onCancel }: Le
         content_type: values.content_type,
         content_url: values.content_url || null,
         source_pdf_path: values.source_pdf_path || null,
+        image_url: values.image_url || null,
         access_level: values.access_level,
       });
     } catch (err) {
@@ -187,6 +211,35 @@ export function LessonForm({ initialValue, moduleTitle, onSubmit, onCancel }: Le
         onChange={(e) => setValues({ ...values, category: e.target.value })}
         placeholder="Vocabulaire, grammaire…"
       />
+
+      <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+        <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+          Image de couverture (optionnel)
+        </label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          disabled={isUploadingImage}
+          className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-red-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-red-700 dark:text-slate-300"
+        />
+        {isUploadingImage && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Envoi en cours…</p>}
+        {values.image_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={values.image_url}
+            alt="Aperçu de l'image de la leçon"
+            className="mt-3 h-28 w-full rounded-lg object-cover"
+          />
+        )}
+        <FieldInput
+          label="Ou colle une URL externe"
+          className="mt-3"
+          value={values.image_url}
+          onChange={(e) => setValues({ ...values, image_url: e.target.value })}
+          placeholder="https://…"
+        />
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -283,27 +336,32 @@ export function LessonForm({ initialValue, moduleTitle, onSubmit, onCancel }: Le
         </div>
       )}
 
-      {values.content_type === 'qcm' && (
-        <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-          <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
-            PDF source pour génération IA (optionnel)
-          </label>
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={handlePdfChange}
-            disabled={isUploadingPdf}
-            className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-red-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-red-700 dark:text-slate-300"
-          />
-          {isUploadingPdf && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Envoi en cours…</p>}
-          {values.source_pdf_path && (
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              PDF associé : {values.source_pdf_path.replace(/^\d+-/, '')}. Jamais visible par les apprenants — sert uniquement à
-              générer les questions QCM (bouton « Générer depuis le PDF » sur la page des questions de cette leçon).
-            </p>
-          )}
-        </div>
-      )}
+      <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+        <label className="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+          PDF source pour génération IA (optionnel)
+        </label>
+        <input
+          type="file"
+          accept="application/pdf"
+          onChange={handlePdfChange}
+          disabled={isUploadingPdf}
+          className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-full file:border-0 file:bg-red-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-red-700 dark:text-slate-300"
+        />
+        {isUploadingPdf && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Envoi en cours…</p>}
+        {values.source_pdf_path && (
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            PDF associé : {values.source_pdf_path.replace(/^\d+-/, '')}. Jamais visible par les apprenants — sert uniquement à
+            générer les questions d&apos;évaluation (bouton « Générer depuis le PDF » sur la page des questions de cette leçon).
+          </p>
+        )}
+        {values.content_type !== 'qcm' && (
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Pour une leçon {values.content_type === 'video' ? 'vidéo' : 'audio'} : si tu fournis un PDF (ex. transcription),
+            l&apos;IA générera les questions à partir de ce PDF plutôt qu&apos;en analysant directement le fichier{' '}
+            {values.content_type === 'video' ? 'vidéo' : 'audio'}.
+          </p>
+        )}
+      </div>
 
       <Toggle
         checked={values.is_published}

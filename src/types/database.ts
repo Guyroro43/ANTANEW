@@ -91,6 +91,7 @@ export interface Database {
           content_type: 'qcm' | 'pdf' | 'video' | 'audio';
           content_url: string | null;
           source_pdf_path: string | null;
+          image_url: string | null;
           access_level: 'free' | 'premium' | 'all';
           created_at: string;
         };
@@ -106,6 +107,7 @@ export interface Database {
           content_type?: 'qcm' | 'pdf' | 'video' | 'audio';
           content_url?: string | null;
           source_pdf_path?: string | null;
+          image_url?: string | null;
           access_level?: 'free' | 'premium' | 'all';
           created_at?: string;
         };

@@ -117,6 +117,10 @@ export default function Page() {
                   <SortableItem key={module.id} id={module.id}>
                     {(dragHandleProps, isDragging) => (
                       <Card className={`flex flex-col gap-4 ${isDragging ? 'shadow-lg' : ''}`}>
+                        {module.image_url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={module.image_url} alt="" className="h-28 w-full object-cover" />
+                        )}
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <div className="flex flex-wrap items-center gap-2">

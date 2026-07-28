@@ -213,13 +213,23 @@ export default function Page() {
               )}
             </>
           )}
-          {(lesson.content_type === 'video' || lesson.content_type === 'audio') && lesson.content_url && (
-            <Button variant="outline" onClick={() => handleGenerate('media')} disabled={isGenerating !== null}>
-              <Icon icon={lesson.content_type === 'video' ? icons.video : icons.speaker} className="h-4 w-4" />
-              {isGenerating === 'media'
-                ? 'Génération…'
-                : `Générer depuis ${lesson.content_type === 'video' ? 'la vidéo' : "l'audio"}`}
-            </Button>
+          {(lesson.content_type === 'video' || lesson.content_type === 'audio') && (
+            <>
+              {lesson.content_url && (
+                <Button variant="outline" onClick={() => handleGenerate('media')} disabled={isGenerating !== null}>
+                  <Icon icon={lesson.content_type === 'video' ? icons.video : icons.speaker} className="h-4 w-4" />
+                  {isGenerating === 'media'
+                    ? 'Génération…'
+                    : `Générer depuis ${lesson.content_type === 'video' ? 'la vidéo' : "l'audio"}`}
+                </Button>
+              )}
+              {lesson.source_pdf_path && (
+                <Button variant="outline" onClick={() => handleGenerate('pdf')} disabled={isGenerating !== null}>
+                  <Icon icon={icons.doc} className="h-4 w-4" />
+                  {isGenerating === 'pdf' ? 'Génération…' : 'Générer depuis le PDF'}
+                </Button>
+              )}
+            </>
           )}
           <Button onClick={openCreate}>
             <Icon icon={icons.plus} className="h-4 w-4" />

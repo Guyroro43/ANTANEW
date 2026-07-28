@@ -14,6 +14,7 @@ export interface LessonCardData {
   category: string | null;
   contentType: string;
   contentTypeLabel: string;
+  imageUrl: string | null;
   locked: boolean;
   completed: boolean;
 }
@@ -82,9 +83,18 @@ export function LessonsList({ lessons }: { lessons: LessonCardData[] }) {
             <Reveal key={lesson.id} delay={index * 0.05}>
               <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600 dark:bg-green-950 dark:text-green-400">
-                    <Icon icon={contentTypeIcons[lesson.contentType] ?? icons.doc} className="h-5 w-5" />
-                  </div>
+                  {lesson.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={lesson.imageUrl}
+                      alt=""
+                      className="h-14 w-14 flex-shrink-0 rounded-xl object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600 dark:bg-green-950 dark:text-green-400">
+                      <Icon icon={contentTypeIcons[lesson.contentType] ?? icons.doc} className="h-5 w-5" />
+                    </div>
+                  )}
                   <div className="flex-1">
                     <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                       {lesson.contentTypeLabel}

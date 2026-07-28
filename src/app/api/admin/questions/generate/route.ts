@@ -113,6 +113,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
+  // Leçon vidéo/audio : l'apprenant consulte déjà le média directement, pas
+  // besoin de vocabulaire généré — même si la génération est passée par un
+  // PDF compagnon plutôt que par l'analyse du média lui-même.
+  if (lesson.content_type !== 'qcm') {
+    generated.vocabulary = [];
+  }
+
   const questionRows = generated.questions.map((question) => ({
     lesson_id: lessonId,
     question_text: question.question_text,

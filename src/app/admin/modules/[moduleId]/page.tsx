@@ -145,6 +145,10 @@ export default function Page() {
                           >
                             <GripVertical className="h-4 w-4" />
                           </button>
+                          {lesson.image_url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={lesson.image_url} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+                          )}
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="font-bold text-slate-900 dark:text-white">{lesson.title}</p>

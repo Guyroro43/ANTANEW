@@ -54,6 +54,7 @@ export default async function Page({ params }: PageProps) {
     category: lesson.category,
     contentType: lesson.content_type,
     contentTypeLabel: contentTypeLabels[lesson.content_type] ?? lesson.content_type,
+    imageUrl: lesson.image_url,
     locked: lesson.access_level === 'premium' && !isPremiumUser,
     completed: completedSet.has(lesson.id),
   }));
