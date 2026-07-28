@@ -2,20 +2,21 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { generateLessonContent, generateLessonContentFromPdf, generateQuestionsFromMedia } from '@/lib/gemini';
 
-const MIME_TYPES_BY_EXTENSION: Record<string, string> = {
-  mp4: 'video/mp4',
-  mov: 'video/quicktime',
-  webm: 'video/webm',
-  mkv: 'video/x-matroska',
-  mp3: 'audio/mpeg',
-  wav: 'audio/wav',
-  m4a: 'audio/mp4',
-  ogg: 'audio/ogg',
-};
+const MIME_TYPES_BY_EXTENSION = new Map<string, string>([
+  ['mp4', 'video/mp4'],
+  ['mov', 'video/quicktime'],
+  ['webm', 'video/webm'],
+  ['mkv', 'video/x-matroska'],
+  ['mp3', 'audio/mpeg'],
+  ['wav', 'audio/wav'],
+  ['m4a', 'audio/mp4'],
+  ['ogg', 'audio/ogg'],
+]);
 
 function guessMimeType(url: string, contentType: 'video' | 'audio') {
   const extension = url.split('.').pop()?.toLowerCase().split('?')[0];
-  if (extension && MIME_TYPES_BY_EXTENSION[extension]) return MIME_TYPES_BY_EXTENSION[extension];
+  const mimeType = extension && MIME_TYPES_BY_EXTENSION.get(extension);
+  if (mimeType) return mimeType;
   return contentType === 'video' ? 'video/mp4' : 'audio/mpeg';
 }
 
