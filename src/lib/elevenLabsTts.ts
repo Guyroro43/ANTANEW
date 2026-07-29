@@ -61,11 +61,20 @@ export interface SynthesizedSegment {
 
 export async function synthesizeSpeech(text: string, persona: Persona): Promise<SynthesizedSegment[]> {
   const segments = splitIntoSpeechSegments(text);
+  const results: SynthesizedSegment[] = [];
 
-  return Promise.all(
-    segments.map(async (segment) => ({
-      audioContentBase64: await synthesizeSegment(segment.text, persona.voiceId),
-      lang: segment.lang,
-    })),
-  );
+  // Séquentiel, et un segment qui échoue (ex. limite de requêtes simultanées
+  // du palier gratuit ElevenLabs) est simplement ignoré plutôt que de faire
+  // échouer tout le message — sinon la ligne 💡 (toujours en français) qui
+  // rate emportait aussi les segments anglais pourtant réussis.
+  for (const segment of segments) {
+    try {
+      const audioContentBase64 = await synthesizeSegment(segment.text, persona.voiceId);
+      results.push({ audioContentBase64, lang: segment.lang });
+    } catch {
+      // Segment ignoré : le reste du message continue d'être synthétisé.
+    }
+  }
+
+  return results;
 }

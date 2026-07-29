@@ -390,6 +390,7 @@ interface ChatWithPracticePartnerParams {
   firstName: string;
   history: ChatTurn[];
   message: string;
+  spoken?: boolean;
 }
 
 export async function chatWithPracticePartner({
@@ -397,12 +398,21 @@ export async function chatWithPracticePartner({
   firstName,
   history,
   message,
+  spoken = false,
 }: ChatWithPracticePartnerParams): Promise<string> {
-  const systemInstruction = `Tu es "Kora", le partenaire de conversation en anglais d'ANTA, une plateforme d'apprentissage pour de jeunes Africains. Tu discutes en anglais avec ${firstName}, dont le niveau est "${level}", pour qu'il/elle pratique à l'écrit dans un cadre bienveillant et motivant.
+  // En mode vocal, la réponse est lue à voix haute par une seule voix TTS :
+  // une correction en français mélangée à de l'anglais forcerait un découpage
+  // par segment de langue, plus fragile à synthétiser (et un segment raté
+  // ne doit pas faire échouer le reste). On garde donc tout en anglais.
+  const correctionRule = spoken
+    ? '- Si l\'apprenant fait une faute d\'anglais notable, corrige-la brièvement et gentiment, en anglais simple (pas de préfixe spécial), puis continue la conversation normalement.'
+    : '- Si l\'apprenant fait une faute d\'anglais notable, corrige-la brièvement et gentiment (une ligne, en français, précédée de "💡"), puis continue la conversation normalement.';
+
+  const systemInstruction = `Tu es "Kora", le partenaire de conversation en anglais d'ANTA, une plateforme d'apprentissage pour de jeunes Africains. Tu discutes en anglais avec ${firstName}, dont le niveau est "${level}", pour qu'il/elle pratique ${spoken ? 'à l\'oral' : 'à l\'écrit'} dans un cadre bienveillant et motivant.
 
 Règles :
 - Réponds principalement en anglais, adapté au niveau ${level} (phrases courtes et vocabulaire simple si débutant, plus riche si avancé).
-- Si l'apprenant fait une faute d'anglais notable, corrige-la brièvement et gentiment (une ligne, en français, précédée de "💡"), puis continue la conversation normalement.
+${correctionRule}
 - Pose des questions de relance pour maintenir la conversation active.
 - Ancre les sujets dans le quotidien africain quand c'est pertinent (marché, transport, famille, foot...), jamais New York/Londres/Tokyo.
 - Ceci est un espace d'entraînement libre, pas une évaluation : ne donne jamais de note ni de score.`;

@@ -175,7 +175,7 @@ class _PratiqueScreenState extends State<PratiqueScreen> {
               'Content-Type': 'application/json',
               if (token != null) 'Authorization': 'Bearer $token',
             },
-            body: jsonEncode({'message': trimmed, 'history': history}),
+            body: jsonEncode({'message': trimmed, 'history': history, 'spoken': speak}),
           )
           .timeout(const Duration(seconds: 30));
 

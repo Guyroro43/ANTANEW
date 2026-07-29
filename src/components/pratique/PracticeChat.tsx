@@ -140,7 +140,7 @@ export function PracticeChat({ firstName }: PracticeChatProps) {
       const response = await fetch('/api/pratique/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: trimmed, history }),
+        body: JSON.stringify({ message: trimmed, history, spoken: speak }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'Échec de la réponse IA.');

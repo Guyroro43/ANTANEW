@@ -16,6 +16,7 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null);
   const message = String(body?.message ?? '').trim().slice(0, MAX_MESSAGE_LENGTH);
+  const spoken = Boolean(body?.spoken);
   const rawHistory = Array.isArray(body?.history) ? body.history : [];
   const history: ChatTurn[] = rawHistory
     .filter((turn: unknown): turn is ChatTurn => {
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
       firstName: profile?.first_name ?? 'Apprenant',
       history,
       message,
+      spoken,
     });
     return NextResponse.json({ reply });
   } catch (err) {
