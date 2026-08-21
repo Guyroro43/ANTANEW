@@ -56,8 +56,9 @@ export function QuestionQCM({
         })}
       </div>
       {answered && explanation ? (
-        <p className="rounded-xl bg-slate-100 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-          💡 {explanation}
+        <p className="flex items-start gap-1.5 rounded-xl bg-slate-100 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+          <Icon icon={icons.lightbulb} className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          {explanation}
         </p>
       ) : null}
     </div>

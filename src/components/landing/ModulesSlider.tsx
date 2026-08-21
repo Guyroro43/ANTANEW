@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Reveal } from '@/components/ui/Reveal';
+import { Icon, icons } from '@/components/ui/Icon';
 
 const modules = [
   {
@@ -87,8 +88,9 @@ export function ModulesSlider() {
               Des parcours qui parlent à votre réalité.
             </h2>
           </div>
-          <Link href="/modules" className="font-semibold text-red-700 transition hover:text-green-700 dark:text-yellow-400">
-            Voir tous les modules →
+          <Link href="/modules" className="flex items-center gap-1 font-semibold text-red-700 transition hover:text-green-700 dark:text-yellow-400">
+            Voir tous les modules
+            <Icon icon={icons.chevronRight} className="h-4 w-4" />
           </Link>
         </div>
       </Reveal>
@@ -157,9 +159,10 @@ export function ModulesSlider() {
                     <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">{active.description}</p>
                     <Link
                       href="/modules"
-                      className="mt-4 inline-flex font-semibold text-red-700 transition hover:text-green-700 dark:text-yellow-400"
+                      className="mt-4 inline-flex items-center gap-1 font-semibold text-red-700 transition hover:text-green-700 dark:text-yellow-400"
                     >
-                      Explorer ce module →
+                      Explorer ce module
+                      <Icon icon={icons.chevronRight} className="h-4 w-4" />
                     </Link>
                   </motion.div>
                 ) : (

@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Clock, PartyPopper, Sparkles } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Icon, icons } from '@/components/ui/Icon';
 import { cn } from '@/lib/utils';
 import type { Json } from '@/types/database';
 
@@ -35,10 +36,10 @@ interface Result {
   total: number;
 }
 
-const levelCopy: Record<Result['level'], { label: string; emoji: string }> = {
-  debutant: { label: 'Débutant', emoji: '🌱' },
-  intermediaire: { label: 'Intermédiaire', emoji: '🚀' },
-  avance: { label: 'Avancé', emoji: '🏆' },
+const levelCopy: Record<Result['level'], { label: string; icon: typeof icons.sprout }> = {
+  debutant: { label: 'Débutant', icon: icons.sprout },
+  intermediaire: { label: 'Intermédiaire', icon: icons.rocket },
+  avance: { label: 'Avancé', icon: icons.trophy },
 };
 
 export function PlacementTestRunner({ firstName, topic, questions }: PlacementTestRunnerProps) {
@@ -239,8 +240,9 @@ export function PlacementTestRunner({ firstName, topic, questions }: PlacementTe
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
                 Résultat
               </p>
-              <h1 className="text-3xl font-black">
-                {levelCopy[result.level].emoji} Niveau {levelCopy[result.level].label}
+              <h1 className="flex items-center justify-center gap-2 text-3xl font-black">
+                <Icon icon={levelCopy[result.level].icon} className="h-7 w-7" />
+                Niveau {levelCopy[result.level].label}
               </h1>
               <p className="text-slate-600 dark:text-slate-300">
                 Tes leçons seront adaptées à ce niveau — tu pourras progresser au fil du temps.

@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { Input } from '@/components/ui/input';
 import { FieldInput } from '@/components/ui/field-input';
 import { Button } from '@/components/ui/button';
+import { Icon, icons } from '@/components/ui/Icon';
 import type { LessonBlockInsert, LessonBlock, QcmBlockContent } from '@/types/module';
 
 interface QcmBlockFormProps {
@@ -107,8 +108,8 @@ export function QcmBlockForm({ initialValue, onSubmit, onCancel }: QcmBlockFormP
                 className="flex-1"
               />
               {options.length > 2 ? (
-                <Button type="button" variant="ghost" size="sm" onClick={() => removeOption(index)}>
-                  ✕
+                <Button type="button" variant="ghost" size="sm" onClick={() => removeOption(index)} aria-label={`Supprimer l'option ${index + 1}`}>
+                  <Icon icon={icons.x} className="h-4 w-4" />
                 </Button>
               ) : null}
             </div>

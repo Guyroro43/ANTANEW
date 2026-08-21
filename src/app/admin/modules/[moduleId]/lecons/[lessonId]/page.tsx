@@ -157,8 +157,9 @@ export default function Page() {
 
   return (
     <main className="px-8 py-10">
-      <Link href={`/admin/modules/${moduleId}`} className="text-sm font-semibold text-red-600 hover:underline dark:text-yellow-400">
-        ← Retour aux leçons
+      <Link href={`/admin/modules/${moduleId}`} className="flex items-center gap-1 text-sm font-semibold text-red-600 hover:underline dark:text-yellow-400">
+        <Icon icon={icons.arrowLeft} className="h-4 w-4" />
+        Retour aux leçons
       </Link>
 
       <div className="mt-4">
@@ -306,14 +307,21 @@ export default function Page() {
                 </div>
                 <ul className="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-300">
                   {(Array.isArray(question.options) ? question.options : []).map((option, index) => (
-                    <li key={index} className={index === question.correct_index ? 'font-semibold text-green-700 dark:text-green-400' : ''}>
-                      {index === question.correct_index ? '✓ ' : '• '}
+                    <li key={index} className={`flex items-center gap-1.5 ${index === question.correct_index ? 'font-semibold text-green-700 dark:text-green-400' : ''}`}>
+                      {index === question.correct_index ? (
+                        <Icon icon={icons.check} className="h-3.5 w-3.5 flex-shrink-0" />
+                      ) : (
+                        <span className="inline-block h-1 w-1 flex-shrink-0 rounded-full bg-current" />
+                      )}
                       {String(option)}
                     </li>
                   ))}
                 </ul>
                 {question.explanation && (
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">💡 {question.explanation}</p>
+                  <p className="mt-2 flex items-start gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <Icon icon={icons.lightbulb} className="h-3.5 w-3.5 flex-shrink-0" />
+                    {question.explanation}
+                  </p>
                 )}
               </div>
               <div className="flex gap-2">

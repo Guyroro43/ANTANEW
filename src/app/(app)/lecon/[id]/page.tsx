@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { LeconRunner } from '@/components/lecon/LeconRunner';
 import { LeconBlocksRunner } from '@/components/lecon/LeconBlocksRunner';
 import { Reveal } from '@/components/ui/Reveal';
+import { Icon, icons } from '@/components/ui/Icon';
 
 interface PageProps {
   params: { id: string };
@@ -74,9 +75,10 @@ export default async function Page({ params }: PageProps) {
             </div>
             <Link
               href={`/modules/${moduleSlug}`}
-              className="rounded-full border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:border-green-500 hover:text-green-700 dark:border-slate-600 dark:text-slate-200"
+              className="flex items-center gap-1.5 rounded-full border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:border-green-500 hover:text-green-700 dark:border-slate-600 dark:text-slate-200"
             >
-              ← Retour au module
+              <Icon icon={icons.arrowLeft} className="h-4 w-4" />
+              Retour au module
             </Link>
           </div>
 

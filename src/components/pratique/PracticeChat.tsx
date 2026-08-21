@@ -53,7 +53,7 @@ export function PracticeChat({ firstName }: PracticeChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'model',
-      text: `Hi ${firstName}! 👋 I'm Kora, your English practice partner. Tell me about your day, or ask me anything — let's chat!`,
+      text: `Hi ${firstName}! I'm Kora, your English practice partner. Tell me about your day, or ask me anything — let's chat!`,
     },
   ]);
   const [input, setInput] = useState('');

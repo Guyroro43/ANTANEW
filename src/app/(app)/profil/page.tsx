@@ -41,7 +41,7 @@ export default async function Page() {
     { label: 'XP total', value: profile?.total_xp ?? 0, icon: icons.bolt },
     {
       label: 'Streak',
-      value: `${streak?.current_streak ?? 0} 🔥`,
+      value: streak?.current_streak ?? 0,
       hint: `record : ${streak?.longest_streak ?? 0}`,
       icon: icons.flame,
     },

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { StatCard } from '@/components/admin/StatCard';
 import { RoleManagementTable } from '@/components/admin/RoleManagementTable';
 import { Card } from '@/components/ui/card';
+import { Icon, icons } from '@/components/ui/Icon';
 import { formatCurrency, formatDate } from '@/utils/format';
 
 export default async function DeveloperDashboardPage() {
@@ -73,7 +74,12 @@ export default async function DeveloperDashboardPage() {
                     <span className="font-semibold text-foreground">
                       {(change.user as unknown as { first_name: string } | null)?.first_name ?? 'Utilisateur supprimé'}
                     </span>{' '}
-                    : {change.previous_role} → {change.new_role}
+                    :{' '}
+                    <span className="inline-flex items-center gap-1">
+                      {change.previous_role}
+                      <Icon icon={icons.arrowRight} className="h-3 w-3" />
+                      {change.new_role}
+                    </span>
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {formatDate(change.changed_at)} par{' '}

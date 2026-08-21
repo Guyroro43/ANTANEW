@@ -45,7 +45,7 @@ export function WelcomeBackModal({ firstName, currentStreak, streakIntact, hasCo
     <Modal open={open} onClose={dismiss} className="max-w-md">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xl font-black text-slate-900 dark:text-white">Salut {firstName} 👋</p>
+          <p className="text-xl font-black text-slate-900 dark:text-white">Salut {firstName}</p>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Prêt(e) à apprendre aujourd&apos;hui ?</p>
         </div>
         <button

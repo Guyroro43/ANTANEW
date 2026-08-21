@@ -3,6 +3,13 @@ import Image from 'next/image';
 import { Suspense } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { SignInForm } from '@/components/auth/SignInForm';
+import { Icon, icons } from '@/components/ui/Icon';
+
+const trustBadges = [
+  { icon: icons.lock, label: 'Sécurisé' },
+  { icon: icons.trophy, label: "Tes badges t'attendent" },
+  { icon: icons.flame, label: 'Reprends ton streak' },
+];
 
 export default function ConnexionPage() {
   return (
@@ -52,9 +59,10 @@ export default function ConnexionPage() {
         </div>
 
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          {['🔒 Sécurisé', '🏆 Tes badges t\'attendent', '🔥 Reprends ton streak'].map((item) => (
-            <span key={item} className="rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white dark:bg-green-800">
-              {item}
+          {trustBadges.map((item) => (
+            <span key={item.label} className="flex items-center gap-1.5 rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white dark:bg-green-800">
+              <Icon icon={item.icon} className="h-3.5 w-3.5" />
+              {item.label}
             </span>
           ))}
         </div>

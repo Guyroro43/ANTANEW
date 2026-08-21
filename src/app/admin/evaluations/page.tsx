@@ -117,7 +117,10 @@ export default function Page() {
       <div className="mt-8">
         <h2 className="text-xl font-black text-slate-900 dark:text-white">En attente de validation ({pending.length})</h2>
         {pending.length === 0 ? (
-          <p className="mt-3 text-slate-600 dark:text-slate-300">Aucune question en attente. 🎉</p>
+          <p className="mt-3 flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+            <Icon icon={icons.partyPopper} className="h-4 w-4" />
+            Aucune question en attente.
+          </p>
         ) : (
           <div className="mt-4 flex flex-col gap-4">
             {pending.map((question) => {
@@ -135,14 +138,21 @@ export default function Page() {
                   <p className="font-bold text-slate-900 dark:text-white">{question.question_text}</p>
                   <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
                     {(Array.isArray(question.options) ? question.options : []).map((option, index) => (
-                      <li key={index} className={index === question.correct_index ? 'font-semibold text-green-700 dark:text-green-400' : ''}>
-                        {index === question.correct_index ? '✓ ' : '• '}
+                      <li key={index} className={`flex items-center gap-1.5 ${index === question.correct_index ? 'font-semibold text-green-700 dark:text-green-400' : ''}`}>
+                        {index === question.correct_index ? (
+                          <Icon icon={icons.check} className="h-3.5 w-3.5 flex-shrink-0" />
+                        ) : (
+                          <span className="inline-block h-1 w-1 flex-shrink-0 rounded-full bg-current" />
+                        )}
                         {String(option)}
                       </li>
                     ))}
                   </ul>
                   {question.explanation && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">💡 {question.explanation}</p>
+                    <p className="flex items-start gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                      <Icon icon={icons.lightbulb} className="h-3.5 w-3.5 flex-shrink-0" />
+                      {question.explanation}
+                    </p>
                   )}
 
                   {review && (
@@ -153,7 +163,11 @@ export default function Page() {
                           : 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300'
                       }`}
                     >
-                      <span className="font-semibold">{review.verdict === 'ok' ? 'IA : OK ✓' : 'IA : à corriger ⚠️'}</span> — {review.comment}
+                      <span className="inline-flex items-center gap-1 font-semibold">
+                        <Icon icon={review.verdict === 'ok' ? icons.check : icons.alertTriangle} className="h-3.5 w-3.5" />
+                        {review.verdict === 'ok' ? 'IA : OK' : 'IA : à corriger'}
+                      </span>{' '}
+                      — {review.comment}
                     </div>
                   )}
                   {reviewError[question.id] && (

@@ -115,8 +115,9 @@ export default function Page() {
 
   return (
     <main className="px-8 py-10">
-      <Link href="/admin/modules" className="text-sm font-semibold text-red-600 hover:underline dark:text-yellow-400">
-        ← Retour aux modules
+      <Link href="/admin/modules" className="flex items-center gap-1 text-sm font-semibold text-red-600 hover:underline dark:text-yellow-400">
+        <Icon icon={icons.arrowLeft} className="h-4 w-4" />
+        Retour aux modules
       </Link>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
         <div>

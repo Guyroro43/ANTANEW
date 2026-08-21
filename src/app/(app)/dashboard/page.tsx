@@ -171,7 +171,7 @@ export default async function Page() {
         <Reveal delay={0.05}>
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[1.5rem] bg-gradient-to-br from-red-600 via-red-500 to-yellow-500 p-6 text-white shadow-lg dark:from-green-700 dark:via-green-600 dark:to-emerald-500">
             <div>
-              <h1 className="text-3xl font-black">Bonjour {firstName} 👋</h1>
+              <h1 className="text-3xl font-black">Bonjour {firstName}</h1>
               <p className="mt-2 max-w-lg text-white/90">
                 Niveau <span className="font-semibold">{level}</span> — {totalXp} XP — Streak de {currentStreak} jour{currentStreak > 1 ? 's' : ''}.
               </p>

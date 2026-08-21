@@ -36,7 +36,9 @@ export function ResultatLecon({
 }: ResultatLeconProps) {
   return (
     <Reveal className="flex flex-col items-center gap-4 py-8 text-center">
-      <p className="text-6xl">🎉</p>
+      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-red-600 via-red-500 to-yellow-500 text-white shadow-lg dark:from-green-700 dark:via-green-600 dark:to-emerald-500">
+        <Icon icon={icons.partyPopper} className="h-8 w-8" />
+      </span>
       <h2 className="text-3xl font-black text-slate-900 dark:text-white">Leçon terminée !</h2>
 
       {total > 0 && (
@@ -95,7 +97,10 @@ export function ResultatLecon({
                   Ta réponse : {mistake.yourAnswer} — Bonne réponse : {mistake.correctAnswer}
                 </p>
                 {mistake.feedback && (
-                  <p className="mt-2 text-sm text-slate-700 dark:text-slate-200">💡 {mistake.feedback}</p>
+                  <p className="mt-2 flex items-start gap-1.5 text-sm text-slate-700 dark:text-slate-200">
+                    <Icon icon={icons.lightbulb} className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                    {mistake.feedback}
+                  </p>
                 )}
               </div>
             ))}

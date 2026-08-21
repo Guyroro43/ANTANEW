@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { Icon, icons } from '@/components/ui/Icon';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -39,9 +40,9 @@ export function Header() {
           onClick={() => setIsMenuOpen((open) => !open)}
           aria-label={isMenuOpen ? 'Masquer le menu' : 'Afficher le menu'}
           aria-expanded={isMenuOpen}
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white/80 text-lg text-slate-800 transition hover:border-red-400 sm:hidden dark:border-slate-600 dark:bg-slate-900/80 dark:text-slate-100"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white/80 text-slate-800 transition hover:border-red-400 sm:hidden dark:border-slate-600 dark:bg-slate-900/80 dark:text-slate-100"
         >
-          {isMenuOpen ? '✕' : '☰'}
+          <Icon icon={isMenuOpen ? icons.x : icons.bars} className="h-5 w-5" />
         </button>
       </div>
 

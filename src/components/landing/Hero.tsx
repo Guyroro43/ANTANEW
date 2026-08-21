@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'motion/react';
+import { Icon, icons } from '@/components/ui/Icon';
 
 const highlights = ['10 min/jour', 'Modules culturels', 'Paiement local'];
 
@@ -69,7 +70,9 @@ export function Hero() {
             </div>
             <div className="mt-8 space-y-4 rounded-2xl bg-white/20 p-4 backdrop-blur">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/30 text-2xl">🗣️</div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/30">
+                  <Icon icon={icons.message} className="h-6 w-6" />
+                </div>
                 <div>
                   <p className="font-semibold">Conversation au marché</p>
                   <p className="text-sm text-yellow-50/90">Vocabulaire utile et expressions locales</p>

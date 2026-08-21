@@ -71,9 +71,10 @@ export default async function Page({ params }: PageProps) {
             </div>
             <Link
               href="/modules"
-              className="rounded-full border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:border-green-500 hover:text-green-700 dark:border-slate-600 dark:text-slate-200"
+              className="flex items-center gap-1.5 rounded-full border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:border-green-500 hover:text-green-700 dark:border-slate-600 dark:text-slate-200"
             >
-              ← Retour aux modules
+              <Icon icon={icons.arrowLeft} className="h-4 w-4" />
+              Retour aux modules
             </Link>
           </div>
         </Reveal>

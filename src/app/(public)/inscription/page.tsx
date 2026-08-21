@@ -2,6 +2,13 @@
 import Image from 'next/image';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { SignUpForm } from '@/components/auth/SignUpForm';
+import { Icon, icons } from '@/components/ui/Icon';
+
+const trustBadges = [
+  { icon: icons.lock, label: 'Sécurisé' },
+  { icon: icons.globe, label: '5 pays' },
+  { icon: icons.bolt, label: 'Gratuit pour toujours' },
+];
 
 export default function InscriptionPage() {
   return (
@@ -46,9 +53,10 @@ export default function InscriptionPage() {
         </div>
 
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          {['🔒 Sécurisé', '🌍 5 pays', '⚡ Gratuit pour toujours'].map((item) => (
-            <span key={item} className="rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white dark:bg-green-800">
-              {item}
+          {trustBadges.map((item) => (
+            <span key={item.label} className="flex items-center gap-1.5 rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white dark:bg-green-800">
+              <Icon icon={item.icon} className="h-3.5 w-3.5" />
+              {item.label}
             </span>
           ))}
         </div>

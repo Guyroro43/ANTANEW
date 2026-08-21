@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Icon, icons } from '@/components/ui/Icon';
 import { GoogleButton } from './GoogleButton';
 
 const inputClass =
@@ -109,8 +110,9 @@ export function SignUpForm() {
           <input id="password" name="password" type="password" placeholder="8 caractères minimum" minLength={8} required className={inputClass} />
         </div>
 
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-          🎯 Juste après ton inscription, un petit quiz chronométré déterminera automatiquement ton niveau d&apos;anglais.
+        <p className="flex items-start gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+          <Icon icon={icons.sparkles} className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          Juste après ton inscription, un petit quiz chronométré déterminera automatiquement ton niveau d&apos;anglais.
         </p>
 
         <label className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400">
